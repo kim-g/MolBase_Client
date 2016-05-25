@@ -19,16 +19,52 @@ namespace MolBase_Client
     {
         static public string StartMsg = "<@Begin_Of_Session@>";
         static public string EndMsg = "<@End_Of_Session@>";
-        static public string Search_Mol = "<@Search_Molecule@>\n";
+        static public string Search_Mol = "<@Search_Molecule@>";
 
         const string Add_User = "<@Add_User@>";
+        public const string Login = "<@Login_User@>";
+        public const string LoginOK = "<@Login_OK@>";
+        public const string NoLogin = "<Error 100: No such loged in user>";
         public const string Add_Mol = "<@Add_Molecule@>";
+        public const string Answer_Admin = "AdminOK";
+
+        // Текущий пользователь
+        static string UserName = "NoUser";
+        static string UserID = "NoUserID";
+        static int ID = 0;
+        static string UserFullName = "";
+
+        public static Statuses Known_Statuses;
 
         public Form1()
         {
             InitializeComponent();
 
-            if(!Directory.Exists(Path.GetTempPath()+"MolBase"))
+            LoginForm LF = new LoginForm();
+            int Status = LF.LoginShow();
+
+            switch (Status)
+            {
+                case 0: //Статус: пользователь
+                    button7.Visible = true;     // Добавить структуру
+                    button6.Visible = true;     // Поиск по структуре
+                    button1.Visible = false;    // Консоль для прямых команд серверу
+                    break;
+                case 1: //Статус: глобальный админ
+                    button7.Visible = true;     // Добавить структуру
+                    button6.Visible = true;     // Поиск по структуре
+                    button1.Visible = true;     // Консоль для прямых команд серверу
+                    break;
+                default:    // Статус: другое == обычный пользователь
+                    button7.Visible = true;     // Добавить структуру
+                    button6.Visible = true;     // Поиск по структуре
+                    button1.Visible = false;    // Консоль для прямых команд серверу
+                    break;
+            }
+
+            Known_Statuses = new Statuses();
+
+            if (!Directory.Exists(Path.GetTempPath()+"MolBase"))
             {
                 Directory.CreateDirectory(Path.GetTempPath() + "MolBase");
             }
@@ -52,6 +88,8 @@ namespace MolBase_Client
                 catch
                 { }
             }
+
+            label1.Text = "Здравствуйте, " + GetFullName() + ".";
         }
 
         public static string TempFile()
@@ -60,25 +98,7 @@ namespace MolBase_Client
             return Path.GetTempPath() + "MolBase\\MolBase" + rnd.Next(1000000, 9999999).ToString() + ".tmp";
         }
 
-        private void button3_Click(object sender, EventArgs e)
-        {
-            OBConversion obconv = new OBConversion();
-            obconv.SetInFormat("cdx");
-            OBMol mol = new OBMol();
-
-            for (int i = 0; i <= 5; i++)
-            {
-                obconv.ReadFile(mol, @"CDX\\"+i.ToString()+".cdx");
-                obconv.SetOutFormat("smi");
-                mol.SetTitle("");
-                obconv.WriteFile(mol, @"SMI\\" + i.ToString() + ".smi");
-            };
-
-
-            label1.Text ="Готово!";
-        }
-
-        static public List<string> Send_Get_Msg_To_Server(string Msg)
+        static public List<string> Send_Get_Msg_To_Server(string Command, string Parameters)
         {
             // Буфер для входящих данных
             byte[] bytes = new byte[1024];
@@ -94,7 +114,7 @@ namespace MolBase_Client
             // Соединяем сокет с удаленной точкой
             senderSocket.Connect(ipEndPoint);
 
-            byte[] msg = Encoding.UTF8.GetBytes(Msg + " ");
+            byte[] msg = Encoding.UTF8.GetBytes(Command + "\n" + UserName + "\n" + UserID + "\n" + Parameters + " ");
 
             // Отправляем данные через сокет
             int bytesSent = senderSocket.Send(msg);
@@ -122,19 +142,15 @@ namespace MolBase_Client
             senderSocket.Shutdown(SocketShutdown.Both);
             senderSocket.Close();
 
+            if (Res[1] == NoLogin)
+            {
+                UserID = "NoUserID";
+                UserName = "NoUser";
+            }
+
             return Res;
         }
 
-        private void button3_Click_1(object sender, EventArgs e)
-        {
-            /*Add_User*/
-            Send_Get_Msg_To_Server(Add_User+"\n"+ textBox1.Text + "\n" + textBox2.Text);
-        }
-
-        private void button4_Click_1(object sender, EventArgs e)
-        {
-            Answer.Lines = Send_Get_Msg_To_Server(textBox3.Text).ToArray();
-        }
 
         private void button6_Click(object sender, EventArgs e)
         {
@@ -148,5 +164,45 @@ namespace MolBase_Client
             Add_Mol_Form.ShowDialog();
         }
 
+        public static void SetUserID(string UID)
+        {
+            UserID = UID;
+        }
+
+        public static void SetLogin(string login)
+        {
+            UserName = login;
+        }
+
+        public static void SetFullName(string FullName)
+        {
+            UserFullName = FullName;
+        }
+
+        public static string GetFullName()
+        {
+            return UserFullName;
+        }
+
+        public static void SetID(int _ID)
+        {
+            ID = _ID;
+        }
+
+        public static int GetID()
+        {
+            return ID;
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            ConsoleForm CF = new ConsoleForm();
+            CF.Show();
+        }
     }
 }

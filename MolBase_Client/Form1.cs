@@ -204,5 +204,40 @@ namespace MolBase_Client
             ConsoleForm CF = new ConsoleForm();
             CF.Show();
         }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            List<string> F_Size = Send_Get_Msg_To_Server("<@*Send_File_Size*@>", "");
+
+
+            int port = 11000;
+            IPAddress ipAddr = IPAddress.Parse("195.19.140.174");
+
+            // Соединяемся с удаленным устройством
+            IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, port);
+
+            Socket senderSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+            // Соединяем сокет с удаленной точкой
+            senderSocket.Connect(ipEndPoint);
+
+            byte[] bytes = new byte[Convert.ToInt64(F_Size[1])];
+            byte[] msg = Encoding.UTF8.GetBytes("<@*Send_File*@>" + "\n" + UserName + "\n" + UserID + "\n" + " ");
+
+            // Отправляем данные через сокет
+            int bytesSent = senderSocket.Send(msg);
+            int bytesRec = senderSocket.Receive(bytes);
+
+            // Записываем всё в файл
+            string FileName = "Test.doc";
+            FileStream fs = new FileStream(FileName, FileMode.Create, FileAccess.Write);
+            fs.Write(bytes, 0, bytes.Count());
+            fs.Flush();
+            fs.Close();
+
+            // Освобождаем сокет
+            senderSocket.Shutdown(SocketShutdown.Both);
+            senderSocket.Close();
+        }
     }
 }

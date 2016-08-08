@@ -98,13 +98,13 @@ namespace MolBase_Client
             return Path.GetTempPath() + "MolBase\\MolBase" + rnd.Next(1000000, 9999999).ToString() + ".tmp";
         }
 
-        static public List<string> Send_Get_Msg_To_Server(string Command, string Parameters)
+        static public List<string> Send_Get_Msg_To_Server(string Command, string Parameters, byte[] BinarInfo = null)
         {
             // Буфер для входящих данных
             byte[] bytes = new byte[1024];
             int port = 11000;
             IPAddress ipAddr = IPAddress.Parse("195.19.140.174");
-            List<string> Res = new List<string>();
+            List<string> Res;
 
             // Соединяемся с удаленным устройством
             IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, port);
@@ -117,26 +117,13 @@ namespace MolBase_Client
             byte[] msg = Encoding.UTF8.GetBytes(Command + "\n" + UserName + "\n" + UserID + "\n" + Parameters + " ");
 
             // Отправляем данные через сокет
+            byte[] msg_size = BitConverter.GetBytes(msg.Length);
+            int bytesSentS = senderSocket.Send(msg_size);
             int bytesSent = senderSocket.Send(msg);
+            if (BinarInfo != null) senderSocket.Send(BinarInfo);
 
             // Получаем ответ от сервера
-            string ResMsg = "";
-            bool Stop = false;
-            do
-            {
-                int bytesRec = senderSocket.Receive(bytes);
-                string ResList = Encoding.UTF8.GetString(bytes, 0, bytesRec);
-                string[] ResArray = ResList.Split("\n"[0]);
-                for (int i = 0; i < ResArray.Count(); i++)
-                {
-                    ResMsg = ResArray[i];
-                    if (ResMsg == "") { continue; };
-                    if (ResMsg == "<@None@>") { Res.Add(""); continue; };
-                    Res.Add(ResMsg);
-                    if (ResMsg == EndMsg) { Stop = true; };
-                }
-            }
-            while (!Stop);
+            Res = Get_ListString_from_bytes(bytes, senderSocket);
 
             // Освобождаем сокет
             senderSocket.Shutdown(SocketShutdown.Both);
@@ -151,6 +138,36 @@ namespace MolBase_Client
             return Res;
         }
 
+        private static List<string> Get_ListString_from_bytes(byte[] bytes, Socket senderSocket)
+        {
+            List<string> Res = new List<string>();
+            bool Stop = false;
+            do
+            {
+                int bytesRec = senderSocket.Receive(bytes);
+                string ResList = Encoding.UTF8.GetString(bytes, 0, bytesRec);
+                Res.AddRange( Parce_StringList(ref Stop, ResList));
+            }
+            while (!Stop);
+
+            return Res;
+        }
+
+        private static List<string> Parce_StringList(ref bool Stop, string ResList)
+        {
+            string ResMsg = "";
+            List<string> Res = new List<string>();
+            string[] ResArray = ResList.Split("\n"[0]);
+            for (int i = 0; i < ResArray.Count(); i++)
+            {
+                ResMsg = ResArray[i];
+                if (ResMsg == "") { continue; };
+                if (ResMsg == "<@None@>") { Res.Add(""); continue; };
+                Res.Add(ResMsg);
+                if (ResMsg == EndMsg) { Stop = true; };
+            }
+            return Res;
+        }
 
         private void button6_Click(object sender, EventArgs e)
         {
@@ -207,7 +224,7 @@ namespace MolBase_Client
 
         private void button3_Click(object sender, EventArgs e)
         {
-            List<string> F_Size = Send_Get_Msg_To_Server("<@*Send_File_Size*@>", "");
+            //List<string> F_Size = Send_Get_Msg_To_Server("<@*Send_File_Size*@>", "");
 
 
             int port = 11000;
@@ -221,15 +238,28 @@ namespace MolBase_Client
             // Соединяем сокет с удаленной точкой
             senderSocket.Connect(ipEndPoint);
 
-            byte[] bytes = new byte[Convert.ToInt64(F_Size[1])];
+            
             byte[] msg = Encoding.UTF8.GetBytes("<@*Send_File*@>" + "\n" + UserName + "\n" + UserID + "\n" + " ");
 
             // Отправляем данные через сокет
             int bytesSent = senderSocket.Send(msg);
+
+            // Получаем длину текстовой записи
+            byte[] SL_Size = new byte[4];
+            senderSocket.Receive(SL_Size);
+            int StringList_Size = BitConverter.ToInt32(SL_Size, 0);
+
+            // Получаем текстовую запись
+            byte[] SL = new byte[StringList_Size];
+            senderSocket.Receive(SL);
+            bool Stop = false;
+            List<string> F_Size = Parce_StringList(ref Stop, Encoding.UTF8.GetString(SL, 0, StringList_Size));
+                
+            byte[] bytes = new byte[Convert.ToInt64(F_Size[2])];
             int bytesRec = senderSocket.Receive(bytes);
 
             // Записываем всё в файл
-            string FileName = "Test.doc";
+            string FileName = F_Size[1];
             FileStream fs = new FileStream(FileName, FileMode.Create, FileAccess.Write);
             fs.Write(bytes, 0, bytes.Count());
             fs.Flush();
@@ -238,6 +268,18 @@ namespace MolBase_Client
             // Освобождаем сокет
             senderSocket.Shutdown(SocketShutdown.Both);
             senderSocket.Close();
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            string FileName = "TestToSend.doc";
+            FileStream fs = new FileStream(FileName, FileMode.Open, FileAccess.Read);
+            byte[] data = new byte[fs.Length];
+            fs.Read(data, 0, data.Length);
+            fs.Flush();
+            fs.Close();
+
+            Send_Get_Msg_To_Server("<@*Get_File*@>", FileName + "\n" + data.Length.ToString(), data);
         }
     }
 }

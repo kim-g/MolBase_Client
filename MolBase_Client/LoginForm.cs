@@ -12,6 +12,7 @@ namespace MolBase_Client
     public partial class LoginForm : Form
     {
         int Status = 0;
+        bool OK_Close = false;
 
         public LoginForm()
         {
@@ -61,6 +62,7 @@ namespace MolBase_Client
             Form1.SetLogin( textBox1.Text );
             Form1.SetID(Convert.ToInt32(Ans[3]));
             Form1.SetFullName(Ans[4]);
+            OK_Close = true;
             Close();
         }
 
@@ -69,6 +71,11 @@ namespace MolBase_Client
             Status = 0;
             ShowDialog();
             return Status;
+        }
+
+        private void LoginForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if (!OK_Close) Application.Exit();
         }
     }
 }

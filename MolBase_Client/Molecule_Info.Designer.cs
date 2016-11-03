@@ -31,6 +31,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Molecule_Info));
             this.label1 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.FilesList = new System.Windows.Forms.ListBox();
+            this.label3 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.panel4 = new System.Windows.Forms.Panel();
@@ -40,6 +42,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
             this.SD = new System.Windows.Forms.SaveFileDialog();
+            this.button3 = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.panel2.SuspendLayout();
@@ -61,12 +64,34 @@
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.button3);
+            this.panel1.Controls.Add(this.FilesList);
+            this.panel1.Controls.Add(this.label3);
             this.panel1.Controls.Add(this.pictureBox1);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Left;
             this.panel1.Location = new System.Drawing.Point(10, 42);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(320, 523);
             this.panel1.TabIndex = 5;
+            // 
+            // FilesList
+            // 
+            this.FilesList.FormattingEnabled = true;
+            this.FilesList.ItemHeight = 24;
+            this.FilesList.Location = new System.Drawing.Point(7, 348);
+            this.FilesList.Name = "FilesList";
+            this.FilesList.Size = new System.Drawing.Size(293, 172);
+            this.FilesList.TabIndex = 2;
+            this.FilesList.DoubleClick += new System.EventHandler(this.FilesList_DoubleClick);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(3, 311);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(205, 24);
+            this.label3.TabIndex = 1;
+            this.label3.Text = "Приложенные файлы:";
             // 
             // pictureBox1
             // 
@@ -157,6 +182,16 @@
             this.SD.Filter = "Portable Document Format (PDF)|*.pdf";
             this.SD.Title = "Сохранить паспорт как...";
             // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(269, 313);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(31, 29);
+            this.button3.TabIndex = 3;
+            this.button3.Text = "+";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
             // Molecule_Info
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(11F, 24F);
@@ -175,6 +210,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Образец GAKt1";
             this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.panel2.ResumeLayout(false);
             this.panel4.ResumeLayout(false);
@@ -197,5 +233,8 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.SaveFileDialog SD;
+        private System.Windows.Forms.ListBox FilesList;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Button button3;
     }
 }

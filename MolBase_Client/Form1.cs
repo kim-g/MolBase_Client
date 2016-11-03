@@ -20,9 +20,11 @@ namespace MolBase_Client
         static public string StartMsg = "<@Begin_Of_Session@>";
         static public string EndMsg = "<@End_Of_Session@>";
         static public string Search_Mol = "<@Search_Molecule@>";
+        static private string IP_Server = "195.19.140.174";
 
         const string Add_User = "<@Add_User@>";
         public const string Login = "<@Login_User@>";
+        public const string FN_msg = "<@GetFileName@>";
         public const string LoginOK = "<@Login_OK@>";
         public const string NoLogin = "<Error 100: No such loged in user>";
         public const string Add_Mol = "<@Add_Molecule@>";
@@ -40,6 +42,11 @@ namespace MolBase_Client
         {
             InitializeComponent();
 
+            Login_Show();
+        }
+
+        private void Login_Show()
+        {
             LoginForm LF = new LoginForm();
             int Status = LF.LoginShow();
 
@@ -64,7 +71,7 @@ namespace MolBase_Client
 
             Known_Statuses = new Statuses();
 
-            if (!Directory.Exists(Path.GetTempPath()+"MolBase"))
+            if (!Directory.Exists(Path.GetTempPath() + "MolBase"))
             {
                 Directory.CreateDirectory(Path.GetTempPath() + "MolBase");
             }
@@ -78,9 +85,9 @@ namespace MolBase_Client
                 catch
                 { }
             }
-                
+
             fullfilesPath =
-                Directory.GetFiles(Path.GetTempPath()+"MolBase\\", "MolBase*.tmp");
+                Directory.GetFiles(Path.GetTempPath() + "MolBase\\", "MolBase*.tmp");
             foreach (string fileName in fullfilesPath)
             {
                 try
@@ -98,12 +105,12 @@ namespace MolBase_Client
             return Path.GetTempPath() + "MolBase\\MolBase" + rnd.Next(1000000, 9999999).ToString() + ".tmp";
         }
 
-        static public List<string> Send_Get_Msg_To_Server(string Command, string Parameters, byte[] BinarInfo = null)
+        static public List<string> Send_Get_Msg_To_Server(string Command, string Parameters = "", byte[] BinarInfo = null)
         {
             // Буфер для входящих данных
             byte[] bytes = new byte[1024];
             int port = 11000;
-            IPAddress ipAddr = IPAddress.Parse("195.19.140.174");
+            IPAddress ipAddr = IPAddress.Parse(IP_Server);
             List<string> Res;
 
             // Соединяемся с удаленным устройством
@@ -120,7 +127,19 @@ namespace MolBase_Client
             byte[] msg_size = BitConverter.GetBytes(msg.Length);
             int bytesSentS = senderSocket.Send(msg_size);
             int bytesSent = senderSocket.Send(msg);
-            if (BinarInfo != null) senderSocket.Send(BinarInfo);
+            if (BinarInfo != null)
+            {
+                MemoryStream ms = new MemoryStream(BinarInfo);
+                for (int i = 0; i < BinarInfo.Count(); i += 1024)
+                {
+                    int Size = 1024;
+                    if (BinarInfo.Count() - i < 1024) { Size = BinarInfo.Count() - i; }
+                    byte[] Block = new byte[Size];
+                    ms.Read(Block, 0, Size);
+                    senderSocket.Send(Block);
+                }
+                //senderSocket.Send(BinarInfo);
+            }
 
             // Получаем ответ от сервера
             Res = Get_ListString_from_bytes(bytes, senderSocket);
@@ -224,11 +243,67 @@ namespace MolBase_Client
 
         private void button3_Click(object sender, EventArgs e)
         {
-            //List<string> F_Size = Send_Get_Msg_To_Server("<@*Send_File_Size*@>", "");
+            GetFile(Convert.ToInt32(textBox1.Text), "TestFile.doc");
+        }
 
+        public static string SaveFileAs(string FileName)
+        {
+            using (var sfd = new SaveFileDialog())
+            {
+                // Задаём нужные параметры
+                string FF = Path.GetExtension(FileName);
+                string FFName = "*" + FF;
+                if (FF == ".doc") FFName = "Документ Microsoft Word 97-2003 (*.doc)";
+                if (FF == ".docx") FFName = "Документ Microsoft Word (*.docx)";
+                if (FF == ".xls") FFName = "Документ Microsoft Excel 97-2003 (*.xls)";
+                if (FF == ".xlsx") FFName = "Документ Microsoft Excel (*.xlsx)";
+                if (FF == ".pdf") FFName = "Документ Portable Document Format (*.pdf)";
+                if (FF == ".jpg") FFName = "Изображение в формате JPEG (*.jpg)";
+                if (FF == ".png") FFName = "Изображение в формате Portable Network Graphics (*.png)";
+                sfd.Filter = FFName + "|*" + FF;
+                sfd.FileName = FileName;
+                sfd.AddExtension = true;
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    return sfd.FileName;
+                }
+                return "<Cancel>";
+            }
+        }
+
+        public static string OpenFile()
+        {
+            using (var ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "Все файлы (*.*)|*.*";
+                ofd.AddExtension = true;
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    return ofd.FileName;
+                }
+                return "<Cancel>";
+            }
+        }
+
+
+        public static void GetFile(int ID, string InFileName="")
+        {
+            string GotFN = InFileName;
+            if (InFileName == "")
+            {
+                List<string> FN = Send_Get_Msg_To_Server(FN_msg, ID.ToString());
+                GotFN = FN[1];
+            }
+            
+            // Спрашиваем, куда сохранить. Если отменяем, то отменяем полностью, не спрашивая сервер.
+            string FileName = SaveFileAs(GotFN);
+            if (FileName == "<Cancel>")
+            {
+                return;
+            }     // Если пользователь отменил, то прекращаем всё.
 
             int port = 11000;
-            IPAddress ipAddr = IPAddress.Parse("195.19.140.174");
+            IPAddress ipAddr = IPAddress.Parse(IP_Server);
 
             // Соединяемся с удаленным устройством
             IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, port);
@@ -238,10 +313,12 @@ namespace MolBase_Client
             // Соединяем сокет с удаленной точкой
             senderSocket.Connect(ipEndPoint);
 
-            
-            byte[] msg = Encoding.UTF8.GetBytes("<@*Send_File*@>" + "\n" + UserName + "\n" + UserID + "\n" + " ");
+
+            byte[] msg = Encoding.UTF8.GetBytes("<@*Send_File*@>" + "\n" + UserName + "\n" + UserID + "\n" +
+                ID.ToString() + "\n" + " ");
 
             // Отправляем данные через сокет
+            int bytesSentS = senderSocket.Send(BitConverter.GetBytes(msg.Length));
             int bytesSent = senderSocket.Send(msg);
 
             // Получаем длину текстовой записи
@@ -254,15 +331,21 @@ namespace MolBase_Client
             senderSocket.Receive(SL);
             bool Stop = false;
             List<string> F_Size = Parce_StringList(ref Stop, Encoding.UTF8.GetString(SL, 0, StringList_Size));
-                
-            byte[] bytes = new byte[Convert.ToInt64(F_Size[2])];
-            int bytesRec = senderSocket.Receive(bytes);
 
-            // Записываем всё в файл
-            string FileName = F_Size[1];
+            // Получаем и записываем в файл по кусочкам
             FileStream fs = new FileStream(FileName, FileMode.Create, FileAccess.Write);
-            fs.Write(bytes, 0, bytes.Count());
-            fs.Flush();
+
+            int FtR_Size = Convert.ToInt32(F_Size[2]);
+            for (int i = 0; i < FtR_Size; i += 1024)
+            {
+                int block;
+                if (FtR_Size - i < 1024) { block = FtR_Size - i; }
+                else { block = 1024; }
+                byte[] buf = new byte[block];
+                senderSocket.Receive(buf);
+                fs.Write(buf, 0, block);
+                fs.Flush();
+            }
             fs.Close();
 
             // Освобождаем сокет
@@ -275,11 +358,20 @@ namespace MolBase_Client
             string FileName = "TestToSend.doc";
             FileStream fs = new FileStream(FileName, FileMode.Open, FileAccess.Read);
             byte[] data = new byte[fs.Length];
-            fs.Read(data, 0, data.Length);
+            MessageBox.Show(fs.Length.ToString());
+            fs.Read(data, 0, Convert.ToInt32( fs.Length));
             fs.Flush();
             fs.Close();
 
             Send_Get_Msg_To_Server("<@*Get_File*@>", FileName + "\n" + data.Length.ToString(), data);
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            Visible = false;
+            Send_Get_Msg_To_Server("<@*Quit*@>");
+            Login_Show();
+            Visible = true;
         }
     }
 }

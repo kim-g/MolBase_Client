@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -13,6 +14,7 @@ namespace MolBase_Client
     public partial class Molecule_Info : Form
     {
         Molecule CurrentMolecule;
+        List<int> FileIDs = new List<int>();
 
         public Molecule_Info(Molecule Mol)
         {
@@ -33,6 +35,13 @@ namespace MolBase_Client
             Info.Add("Синтезировано в: " + Mol.LaboratoryName);
             Info.Add("Синтезировал: " + Mol.MadeBy.Job + ", " + Mol.MadeBy.GetInitNameFirst());
 
+            // Список приложенных файлов
+            for (int i = 0; i < Mol.FileName.Count; i++)
+            {
+                FilesList.Items.Add(Mol.FileName[i]);
+                FileIDs.Add(Mol.FileID[i]);
+            }
+
             textBox1.Lines = Info.ToArray();
         }
 
@@ -49,6 +58,38 @@ namespace MolBase_Client
             PDF_Passport.Get_Passport(CurrentMolecule, SD.FileName);
             Process.Start(SD.FileName);
             Close();
+        }
+
+        private void FilesList_DoubleClick(object sender, EventArgs e)
+        {
+            if (FilesList.SelectedIndex == -1) { return; }
+
+            Form1.GetFile(FileIDs[FilesList.SelectedIndex]);
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            // Выбор файла
+            string FileName = Form1.OpenFile();     if (FileName == "<Cancel>") return;
+            string FileNameShort = Path.GetFileName(FileName);
+            // Наименование файла
+            string Name = Input_String.GetString("Название файла", "Название сохраняемого файла");
+            if (Name == "@Cancel@") return;
+            if (Name == "") return;
+
+            // Отправление файл
+            FileStream fs = new FileStream(FileName, FileMode.Open, FileAccess.Read);
+            byte[] data = new byte[fs.Length];
+            fs.Read(data, 0, Convert.ToInt32(fs.Length));
+            fs.Flush();
+            fs.Close();
+
+            List<string> Answer = Form1.Send_Get_Msg_To_Server("<@*Get_File*@>", FileNameShort + "\n" + Name + 
+                "\n" + data.Length.ToString(), data);
+
+            // Просмотр ответа и добавление файла в список
+            FilesList.Items.Add(Name);
+            FileIDs.Add(Convert.ToInt32(Answer[1]));
         }
     }
 }

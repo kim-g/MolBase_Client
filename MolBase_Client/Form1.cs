@@ -17,18 +17,20 @@ namespace MolBase_Client
 {
     public partial class Form1 : Form
     {
-        static public string StartMsg = "<@Begin_Of_Session@>";
-        static public string EndMsg = "<@End_Of_Session@>";
-        static public string Search_Mol = "<@Search_Molecule@>";
-        static private string IP_Server = "195.19.140.174";
+        static public string StartMsg = "<@Begin_Of_Session@>"; // Начало сессии передачи ответа сервера
+        static public string EndMsg = "<@End_Of_Session@>";     // Конец сессии передачи ответа сервера
+        static public string Search_Mol = "<@Search_Molecule@>";    // Команда поиска молекулы
+        static private string IP_Server = "195.19.140.174";     // IP сервера
 
-        const string Add_User = "<@Add_User@>";
-        public const string Login = "<@Login_User@>";
-        public const string FN_msg = "<@GetFileName@>";
-        public const string LoginOK = "<@Login_OK@>";
-        public const string NoLogin = "<Error 100: No such loged in user>";
-        public const string Add_Mol = "<@Add_Molecule@>";
-        public const string Answer_Admin = "AdminOK";
+        const string Add_User = "<@Add_User@>";                 // Команда добавления пользователя
+        public const string Login = "<@Login_User@>";           // Команда входа в систему
+        public const string FN_msg = "<@GetFileName@>";         // Команда получения имени файла (не используется)
+        public const string LoginOK = "<@Login_OK@>";           // Ответ сервера об успешном входе в систему
+        public const string NoLogin = "<Error 100: No such loged in user>";     // Ответ сервера о том, что имя пользователя-пароль не найдены
+        public const string Add_Mol = "<@Add_Molecule@>";       // Команда на добавление молекулы
+        public const string Answer_Admin = "AdminOK";           // Ответ сервера, что пользователь является админом
+        public const string Show_My_mol = "<@Show my molecules@>";  // Команда показать все молекулы
+        public const string Increase_Status = "<@Increase status@>"; // Увеличеть значение статуса соединения
 
         // Текущий пользователь
         static string UserName = "NoUser";
@@ -241,11 +243,6 @@ namespace MolBase_Client
             CF.Show();
         }
 
-        private void button3_Click(object sender, EventArgs e)
-        {
-            GetFile(Convert.ToInt32(textBox1.Text), "TestFile.doc");
-        }
-
         public static string SaveFileAs(string FileName)
         {
             using (var sfd = new SaveFileDialog())
@@ -353,25 +350,24 @@ namespace MolBase_Client
             senderSocket.Close();
         }
 
-        private void button4_Click(object sender, EventArgs e)
-        {
-            string FileName = "TestToSend.doc";
-            FileStream fs = new FileStream(FileName, FileMode.Open, FileAccess.Read);
-            byte[] data = new byte[fs.Length];
-            MessageBox.Show(fs.Length.ToString());
-            fs.Read(data, 0, Convert.ToInt32( fs.Length));
-            fs.Flush();
-            fs.Close();
-
-            Send_Get_Msg_To_Server("<@*Get_File*@>", FileName + "\n" + data.Length.ToString(), data);
-        }
-
         private void button5_Click(object sender, EventArgs e)
         {
             Visible = false;
             Send_Get_Msg_To_Server("<@*Quit*@>");
             Login_Show();
             Visible = true;
+        }
+
+        private void button3_Click_1(object sender, EventArgs e)
+        {
+            // Запрашиваем сервер и получаем ответ
+            List<string> Answer = Form1.Send_Get_Msg_To_Server(Show_My_mol);
+
+            List<Molecule> Mols = Functions.GetMolListFromServerAnswer(Answer);
+
+            MoleculesList ML = new MoleculesList();
+            ML.DrawList(Mols);
+            ML.ShowDialog();
         }
     }
 }

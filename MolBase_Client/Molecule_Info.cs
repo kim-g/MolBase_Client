@@ -24,6 +24,7 @@ namespace MolBase_Client
             label1.Text = "ПАСПОРТ НА ОБРАЗЕЦ № " + Mol.name;
 
             List<string> Info = new List<string>();
+            StatusLabel.Text = "Статус заявки: " + Mol.Status;
             Info.Add("Молярная масса: " + Math.Round(Mol.Structure.GetMolWt()).ToString());
             Info.Add("Брутто-формула: " + Mol.Structure.GetFormula());
             Info.Add("Физическое состояние: " + Mol.State);
@@ -85,11 +86,24 @@ namespace MolBase_Client
             fs.Close();
 
             List<string> Answer = Form1.Send_Get_Msg_To_Server("<@*Get_File*@>", FileNameShort + "\n" + Name + 
-                "\n" + data.Length.ToString(), data);
+                "\n" + data.Length.ToString() + "\n" + CurrentMolecule.ID.ToString(), data);
 
             // Просмотр ответа и добавление файла в список
             FilesList.Items.Add(Name);
             FileIDs.Add(Convert.ToInt32(Answer[1]));
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            List<string> Answer = Form1.Send_Get_Msg_To_Server(Form1.Increase_Status, CurrentMolecule.ID.ToString());
+            if (Answer[1] == "OK")
+            {
+                CurrentMolecule.Status = Form1.Known_Statuses.GetStatus(++CurrentMolecule.Status_Num);
+                StatusLabel.Text = "Статус заявки: " + CurrentMolecule.Status;
+                ((MoleculesList)Owner).DrawMyList();
+                Owner.Refresh();
+            }
+            else MessageBox.Show(Answer[1], "Ошибка");
         }
     }
 }

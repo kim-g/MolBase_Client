@@ -141,31 +141,31 @@
             // 
             this.textBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.textBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.textBox1.Location = new System.Drawing.Point(0, 37);
+            this.textBox1.Location = new System.Drawing.Point(0, 68);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
             this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox1.Size = new System.Drawing.Size(448, 449);
+            this.textBox1.Size = new System.Drawing.Size(448, 418);
             this.textBox1.TabIndex = 0;
             // 
             // panel5
             // 
-            this.panel5.Controls.Add(this.button4);
             this.panel5.Controls.Add(this.StatusLabel);
+            this.panel5.Controls.Add(this.button4);
             this.panel5.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel5.Location = new System.Drawing.Point(0, 0);
             this.panel5.Name = "panel5";
-            this.panel5.Size = new System.Drawing.Size(448, 37);
+            this.panel5.Size = new System.Drawing.Size(448, 68);
             this.panel5.TabIndex = 1;
             // 
             // button4
             // 
             this.button4.AutoSize = true;
-            this.button4.Dock = System.Windows.Forms.DockStyle.Right;
-            this.button4.Location = new System.Drawing.Point(338, 0);
+            this.button4.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.button4.Location = new System.Drawing.Point(0, 31);
             this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(110, 37);
+            this.button4.Size = new System.Drawing.Size(448, 37);
             this.button4.TabIndex = 1;
             this.button4.Text = "Повысить";
             this.button4.UseVisualStyleBackColor = true;
@@ -173,11 +173,10 @@
             // 
             // StatusLabel
             // 
-            this.StatusLabel.AutoSize = true;
-            this.StatusLabel.Dock = System.Windows.Forms.DockStyle.Left;
+            this.StatusLabel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.StatusLabel.Location = new System.Drawing.Point(0, 0);
             this.StatusLabel.Name = "StatusLabel";
-            this.StatusLabel.Size = new System.Drawing.Size(60, 24);
+            this.StatusLabel.Size = new System.Drawing.Size(448, 68);
             this.StatusLabel.TabIndex = 0;
             this.StatusLabel.Text = "label4";
             // 

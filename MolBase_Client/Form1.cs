@@ -29,8 +29,10 @@ namespace MolBase_Client
         public const string NoLogin = "<Error 100: No such loged in user>";     // Ответ сервера о том, что имя пользователя-пароль не найдены
         public const string Add_Mol = "<@Add_Molecule@>";       // Команда на добавление молекулы
         public const string Answer_Admin = "AdminOK";           // Ответ сервера, что пользователь является админом
-        public const string Show_My_mol = "<@Show my molecules@>";  // Команда показать все молекулы
+        public const string Answer_Manager = "ManagerOK";           // Ответ сервера, что пользователь является управляющим
+        public const string Show_My_mol = "<@Show my molecules@>";  // Команда показать все молекулы пользователя
         public const string Increase_Status = "<@Increase status@>"; // Увеличеть значение статуса соединения
+        public const string Show_New_Mol = "<@Show new molecules@>";  // Команда показать все молекулы новые
 
         // Текущий пользователь
         static string UserName = "NoUser";
@@ -58,11 +60,19 @@ namespace MolBase_Client
                     button7.Visible = true;     // Добавить структуру
                     button6.Visible = true;     // Поиск по структуре
                     button1.Visible = false;    // Консоль для прямых команд серверу
+                    button4.Visible = false;    // Показ новых заявок
                     break;
                 case 1: //Статус: глобальный админ
                     button7.Visible = true;     // Добавить структуру
                     button6.Visible = true;     // Поиск по структуре
                     button1.Visible = true;     // Консоль для прямых команд серверу
+                    button4.Visible = true;     // Показ новых заявок
+                    break;
+                case 2: //Статус: управляющий
+                    button7.Visible = true;     // Добавить структуру
+                    button6.Visible = true;     // Поиск по структуре
+                    button1.Visible = false;    // Консоль для прямых команд серверу
+                    button4.Visible = true;     // Показ новых заявок
                     break;
                 default:    // Статус: другое == обычный пользователь
                     button7.Visible = true;     // Добавить структуру
@@ -360,14 +370,26 @@ namespace MolBase_Client
 
         private void button3_Click_1(object sender, EventArgs e)
         {
-            // Запрашиваем сервер и получаем ответ
-            List<string> Answer = Form1.Send_Get_Msg_To_Server(Show_My_mol);
+            Get_Molecule_List(Show_My_mol);
+        }
 
+        private static void Get_Molecule_List(string Message)
+        {
+            // Запрашиваем сервер и получаем ответ
+            List<string> Answer = Form1.Send_Get_Msg_To_Server(Message);
+
+            // Преобразуем ответ в список молекул
             List<Molecule> Mols = Functions.GetMolListFromServerAnswer(Answer);
 
+            // И покажем окно со списком.
             MoleculesList ML = new MoleculesList();
             ML.DrawList(Mols);
             ML.ShowDialog();
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            Get_Molecule_List(Show_New_Mol);
         }
     }
 }

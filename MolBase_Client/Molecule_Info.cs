@@ -15,16 +15,35 @@ namespace MolBase_Client
     {
         Molecule CurrentMolecule;
         List<int> FileIDs = new List<int>();
+        int Cur_Element;
 
-        public Molecule_Info(Molecule Mol)
+        // Текст кнопки повышения статуса
+        private const string Status_Button_Begin = "Изменить на «";
+        private const string Status_Button_End = "»";
+
+        public Molecule_Info(Molecule Mol, int Element)
         {
             InitializeComponent();
             CurrentMolecule = Mol;
+            Cur_Element = Element;
             pictureBox1.Image = Mol.Picture;
             label1.Text = "ПАСПОРТ НА ОБРАЗЕЦ № " + Mol.name;
 
             List<string> Info = new List<string>();
             StatusLabel.Text = "Статус заявки: " + Mol.Status;
+            if (Form1.Known_Statuses.GetNextStatus(Mol.Status_Num) > -1)
+            {
+                button4.Text = Status_Button_Begin + 
+                    Form1.Known_Statuses.GetStatus(Form1.Known_Statuses.GetNextStatus(Mol.Status_Num)) +
+                    Status_Button_End;
+                button4.Enabled = true;
+            }
+            else
+            {
+                button4.Text = Status_Button_Begin + Form1.Known_Statuses.GetStatus(Mol.Status_Num) +
+                    Status_Button_End;
+                button4.Enabled = false;
+            }
             Info.Add("Молярная масса: " + Math.Round(Mol.Structure.GetMolWt()).ToString());
             Info.Add("Брутто-формула: " + Mol.Structure.GetFormula());
             Info.Add("Физическое состояние: " + Mol.State);
@@ -93,16 +112,39 @@ namespace MolBase_Client
             FileIDs.Add(Convert.ToInt32(Answer[1]));
         }
 
+        // Изменение статуса заявки
         private void button4_Click(object sender, EventArgs e)
         {
+            // Спросим, «Вы уверены?»
+            if (MessageBox.Show("Вы уверены, что хотите изменить статус заявки на «" +
+                Form1.Known_Statuses.GetStatus(Form1.Known_Statuses.GetNextStatus(CurrentMolecule.Status_Num)) + 
+                "»?", "Изменение статуса заявки", MessageBoxButtons.YesNo) == DialogResult.No) return;
+
+            // Если да
+            // Отправим серверу запрос
             List<string> Answer = Form1.Send_Get_Msg_To_Server(Form1.Increase_Status, CurrentMolecule.ID.ToString());
+
+            // Если сервер благополучно изменил, то
             if (Answer[1] == "OK")
             {
-                CurrentMolecule.Status = Form1.Known_Statuses.GetStatus(++CurrentMolecule.Status_Num);
+                // Вычислим и присвоим молекуле новый статус, а также напишем об этом
+                CurrentMolecule.Status_Num = Form1.Known_Statuses.GetNextStatus(CurrentMolecule.Status_Num);
+                CurrentMolecule.Status = Form1.Known_Statuses.GetStatus(CurrentMolecule.Status_Num);
                 StatusLabel.Text = "Статус заявки: " + CurrentMolecule.Status;
-                ((MoleculesList)Owner).DrawMyList();
+
+                // Изменим рисунок молекулы в окне MoleculeList
+                ((MoleculesList)Owner).Draw_Element(Cur_Element);
                 Owner.Refresh();
+
+                // И поменяем надпись на кнопке. Если мы получили финальный статус, кнопку отключим.
+                if (Form1.Known_Statuses.GetNextStatus(CurrentMolecule.Status_Num) == -1)
+                {
+                    button4.Enabled = false;
+                }
+                else button4.Text = Status_Button_Begin + Form1.Known_Statuses.GetStatus(
+                    Form1.Known_Statuses.GetNextStatus(CurrentMolecule.Status_Num)) + Status_Button_End;
             }
+            // Если же сервер выдал ошибку, сообщим о ней.
             else MessageBox.Show(Answer[1], "Ошибка");
         }
     }

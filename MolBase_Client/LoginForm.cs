@@ -57,6 +57,10 @@ namespace MolBase_Client
             {
                 Status = 1;
             }
+            if (Ans[5] == Form1.Answer_Manager)
+            {
+                Status = 2;
+            }
 
             Form1.SetUserID( Ans[2] );
             Form1.SetLogin( textBox1.Text );

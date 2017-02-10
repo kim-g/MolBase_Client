@@ -27,7 +27,7 @@ namespace MolBase_Client
         public const string FN_msg = "<@GetFileName@>";         // Команда получения имени файла (не используется)
         public const string LoginOK = "<@Login_OK@>";           // Ответ сервера об успешном входе в систему
         public const string NoLogin = "<Error 100: No such loged in user>";     // Ответ сервера о том, что имя пользователя-пароль не найдены
-        public const string Add_Mol = "<@Add_Molecule@>";       // Команда на добавление молекулы
+        public const string Add_Mol = "molecules.add";       // Команда на добавление молекулы
         public const string Answer_Admin = "AdminOK";           // Ответ сервера, что пользователь является админом
         public const string Answer_Manager = "ManagerOK";           // Ответ сервера, что пользователь является управляющим
         public const string Show_My_mol = "<@Show my molecules@>";  // Команда показать все молекулы пользователя

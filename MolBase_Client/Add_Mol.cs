@@ -154,22 +154,22 @@ namespace MolBase_Client
             if (!CheckInputData()) { return; }
 
             List<string> message = new List<string>();
-            message.Add(S_Name.Text);               // Шифр
-            message.Add("1");                       // Лаборатория
-            message.Add("1");                       // Персона
-            message.Add(obconv.WriteString(mol).Trim("\n"[0]));   // Структура
-            message.Add(PhysState.Text);            // Физ. состояние
-            message.Add(Melt.Text);                 // Т. плавления
-            message.Add(Conditions.Text);           // Условия хранения
-            message.Add(Properties.Text);           // Особые свойства
-            message.Add(Mass.Text);                 // Масса образца
-            message.Add(Solution.Text);             // Растворимость образца
+            message.Add("code " + S_Name.Text);               // Шифр
+            message.Add("laboratory 1");                       // Лаборатория
+            message.Add("person 1");                       // Персона
+            message.Add("structure " + obconv.WriteString(mol).Trim("\n"[0]));   // Структура
+            message.Add("phys_state " + PhysState.Text);            // Физ. состояние
+            message.Add("melting_point " + Melt.Text);                 // Т. плавления
+            message.Add("conditions " + Conditions.Text);           // Условия хранения
+            message.Add("properties " + Properties.Text);           // Особые свойства
+            message.Add("mass " + Mass.Text);                 // Масса образца
+            message.Add("solution " + Solution.Text);             // Растворимость образца
 
 
 
             List<string> Answer = Form1.Send_Get_Msg_To_Server(Form1.Add_Mol, ListOfStringToString(message));
 
-            if (Answer[0]=="Added")
+            if (Answer[1]== "Add_Molecule: done")
             {
                 Close();
             }

@@ -46,7 +46,14 @@ namespace MolBase_Client
         {
             InitializeComponent();
 
+            Application.ApplicationExit += OnApplicationExit;
+
             Login_Show();
+        }
+
+        private void OnApplicationExit(object sender, EventArgs e)
+        {
+            Send_Get_Msg_To_Server("<@*Quit*@>");
         }
 
         private void Login_Show()
@@ -243,7 +250,7 @@ namespace MolBase_Client
         }
 
         private void button2_Click(object sender, EventArgs e)
-        {
+        {           
             Application.Exit();
         }
 
@@ -390,6 +397,11 @@ namespace MolBase_Client
         private void button4_Click(object sender, EventArgs e)
         {
             Get_Molecule_List(Show_New_Mol);
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

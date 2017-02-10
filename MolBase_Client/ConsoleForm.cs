@@ -18,7 +18,11 @@ namespace MolBase_Client
 
         private void button1_Click(object sender, EventArgs e)
         {
-            Answer.Lines = Form1.Send_Get_Msg_To_Server(textBox1.Text, textBox2.Text).ToArray();
+            List<string> Ans = Form1.Send_Get_Msg_To_Server(textBox1.Text, textBox2.Text);
+            Ans.RemoveAt(0);
+            Ans.RemoveAt(Ans.Count - 1);
+
+            Answer.Lines = Ans.ToArray();
         }
     }
 }

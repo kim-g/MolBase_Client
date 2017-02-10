@@ -30,10 +30,10 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ConsoleForm));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.button1 = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
             this.textBox2 = new System.Windows.Forms.TextBox();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.button1 = new System.Windows.Forms.Button();
             this.Answer = new System.Windows.Forms.TextBox();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -60,6 +60,16 @@
             this.splitContainer1.SplitterDistance = 218;
             this.splitContainer1.TabIndex = 0;
             // 
+            // textBox2
+            // 
+            this.textBox2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.textBox2.Location = new System.Drawing.Point(0, 26);
+            this.textBox2.Multiline = true;
+            this.textBox2.Name = "textBox2";
+            this.textBox2.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.textBox2.Size = new System.Drawing.Size(583, 192);
+            this.textBox2.TabIndex = 1;
+            // 
             // panel1
             // 
             this.panel1.Controls.Add(this.textBox1);
@@ -69,17 +79,6 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(583, 26);
             this.panel1.TabIndex = 0;
-            // 
-            // button1
-            // 
-            this.button1.Dock = System.Windows.Forms.DockStyle.Right;
-            this.button1.Location = new System.Drawing.Point(489, 0);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(94, 26);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "Выполнить";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // textBox1
             // 
@@ -91,15 +90,16 @@
             this.textBox1.TabIndex = 1;
             this.textBox1.WordWrap = false;
             // 
-            // textBox2
+            // button1
             // 
-            this.textBox2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.textBox2.Location = new System.Drawing.Point(0, 26);
-            this.textBox2.Multiline = true;
-            this.textBox2.Name = "textBox2";
-            this.textBox2.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox2.Size = new System.Drawing.Size(583, 192);
-            this.textBox2.TabIndex = 1;
+            this.button1.Dock = System.Windows.Forms.DockStyle.Right;
+            this.button1.Location = new System.Drawing.Point(489, 0);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(94, 26);
+            this.button1.TabIndex = 0;
+            this.button1.Text = "Выполнить";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // Answer
             // 
@@ -116,12 +116,14 @@
             // 
             // ConsoleForm
             // 
+            this.AcceptButton = this.button1;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(583, 463);
             this.Controls.Add(this.splitContainer1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "ConsoleForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "ConsoleForm";
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel1.PerformLayout();

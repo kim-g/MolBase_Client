@@ -68,23 +68,27 @@ namespace MolBase_Client
                     button6.Visible = true;     // Поиск по структуре
                     button1.Visible = false;    // Консоль для прямых команд серверу
                     button4.Visible = false;    // Показ новых заявок
+                    button9.Visible = false;    // Редактирование списка пользователей
                     break;
                 case 1: //Статус: глобальный админ
                     button7.Visible = true;     // Добавить структуру
                     button6.Visible = true;     // Поиск по структуре
                     button1.Visible = true;     // Консоль для прямых команд серверу
                     button4.Visible = true;     // Показ новых заявок
+                    button9.Visible = true;     // Редактирование списка пользователей
                     break;
                 case 2: //Статус: управляющий
                     button7.Visible = true;     // Добавить структуру
                     button6.Visible = true;     // Поиск по структуре
                     button1.Visible = false;    // Консоль для прямых команд серверу
                     button4.Visible = true;     // Показ новых заявок
+                    button9.Visible = true;     // Редактирование списка пользователей
                     break;
                 default:    // Статус: другое == обычный пользователь
                     button7.Visible = true;     // Добавить структуру
                     button6.Visible = true;     // Поиск по структуре
                     button1.Visible = false;    // Консоль для прямых команд серверу
+                    button9.Visible = false;    // Редактирование списка пользователей
                     break;
             }
 
@@ -402,6 +406,12 @@ namespace MolBase_Client
         private void Form1_Load(object sender, EventArgs e)
         {
 
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            // Временно
+            EditUser.Add();
         }
     }
 }

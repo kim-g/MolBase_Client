@@ -19,20 +19,21 @@ namespace MolBase_Client
     {
         static public string StartMsg = "<@Begin_Of_Session@>"; // Начало сессии передачи ответа сервера
         static public string EndMsg = "<@End_Of_Session@>";     // Конец сессии передачи ответа сервера
-        static public string Search_Mol = "<@Search_Molecule@>";    // Команда поиска молекулы
         static private string IP_Server = "195.19.140.174";     // IP сервера
 
         const string Add_User = "<@Add_User@>";                 // Команда добавления пользователя
-        public const string Login = "<@Login_User@>";           // Команда входа в систему
+        public const string Login = "account.login";           // Команда входа в систему
         public const string FN_msg = "<@GetFileName@>";         // Команда получения имени файла (не используется)
         public const string LoginOK = "<@Login_OK@>";           // Ответ сервера об успешном входе в систему
         public const string NoLogin = "<Error 100: No such loged in user>";     // Ответ сервера о том, что имя пользователя-пароль не найдены
         public const string Add_Mol = "molecules.add";       // Команда на добавление молекулы
+        public const string Search_Mol = "molecules.search";    // Команда поиска молекулы
         public const string Answer_Admin = "AdminOK";           // Ответ сервера, что пользователь является админом
         public const string Answer_Manager = "ManagerOK";           // Ответ сервера, что пользователь является управляющим
-        public const string Show_My_mol = "<@Show my molecules@>";  // Команда показать все молекулы пользователя
+        public const string Show_My_mol = "<@Show my molecules@>";  // УСТАРЕЛА!!! Использовать "molecules.search my"! Команда показать все молекулы пользователя
         public const string Increase_Status = "<@Increase status@>"; // Увеличеть значение статуса соединения
         public const string Show_New_Mol = "<@Show new molecules@>";  // Команда показать все молекулы новые
+        public const string QuitMsg = "account.quit";  // Команда на выход пользователя
 
         // Текущий пользователь
         static string UserName = "NoUser";
@@ -53,7 +54,7 @@ namespace MolBase_Client
 
         private void OnApplicationExit(object sender, EventArgs e)
         {
-            Send_Get_Msg_To_Server("<@*Quit*@>");
+            Send_Get_Msg_To_Server(QuitMsg);
         }
 
         private void Login_Show()
@@ -374,20 +375,20 @@ namespace MolBase_Client
         private void button5_Click(object sender, EventArgs e)
         {
             Visible = false;
-            Send_Get_Msg_To_Server("<@*Quit*@>");
+            Send_Get_Msg_To_Server(QuitMsg);
             Login_Show();
             Visible = true;
         }
 
         private void button3_Click_1(object sender, EventArgs e)
         {
-            Get_Molecule_List(Show_My_mol);
+            Get_Molecule_List("molecules.search", "my");
         }
 
-        private static void Get_Molecule_List(string Message)
+        private static void Get_Molecule_List(string Message, string Parameters = "")
         {
             // Запрашиваем сервер и получаем ответ
-            List<string> Answer = Form1.Send_Get_Msg_To_Server(Message);
+            List<string> Answer = Send_Get_Msg_To_Server(Message, Parameters);
 
             // Преобразуем ответ в список молекул
             List<Molecule> Mols = Functions.GetMolListFromServerAnswer(Answer);
@@ -411,7 +412,7 @@ namespace MolBase_Client
         private void button9_Click(object sender, EventArgs e)
         {
             // Временно
-            EditUser.Add();
+            UserList.Show(this);
         }
     }
 }

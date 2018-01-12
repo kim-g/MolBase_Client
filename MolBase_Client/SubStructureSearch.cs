@@ -104,7 +104,8 @@ namespace MolBase_Client
             obconv.ReadFile(molec, textBox1.Text);
 
             // Запрашиваем сервер и получаем ответ
-            List<string> Answer = Form1.Send_Get_Msg_To_Server(Form1.Search_Mol, obconv.WriteString(molec) + " ");
+            List<string> Answer = Form1.Send_Get_Msg_To_Server(Form1.Search_Mol, 
+                "structure " + obconv.WriteString(molec) + " ");
 
             Mols = Functions.GetMolListFromServerAnswer(Answer);
 

@@ -12,13 +12,15 @@ namespace MolBase_Client
     public partial class EditUser : Form
     {
         int status = 0; // 0 - ERROR, 1 - ADD, 2 - EDIT
+        List<int> LabsID;
+        bool FormAnswer = false;
 
         public EditUser()
         {
             InitializeComponent();
         }
 
-        public static bool Add()
+        public static bool Add(IWin32Window Owner)
         {
             // Создаём новое окно
             EditUser Form = new EditUser();
@@ -28,11 +30,31 @@ namespace MolBase_Client
             Form.Text = "Добавление нового пользователя";
             Form.button1.Text = "Добавить";
 
+            // Получаем список лабораторий
+            GetLabs(Form);
+
             // Показываем окно
-            Form.ShowDialog();
+            Form.ShowDialog(Owner);
 
             // Если всё плохо – возвращаем false
-            return false;
+            return Form.FormAnswer;
+        }
+
+        private static void GetLabs(EditUser Form)
+        {
+            Form.comboBox1.Items.Clear();
+            Form.LabsID = new List<int>();
+
+            List<string> Labs = Form1.Send_Get_Msg_To_Server("laboratories.names");
+            if (Labs.Count < 3) { Form.comboBox1.Items.Add("Нет лабораторий в базе данных"); return; }
+
+            for (int i = 1; i < Labs.Count-1; i++) //Игнорируем первую и последнюю записи
+            {
+                string[] Val = Labs[i].Split('=');
+                Form.comboBox1.Items.Add(Val[1]);
+                Form.LabsID.Add(Convert.ToInt32(Val[0]));
+            }
+ 
         }
 
         public static bool Edit(int UserID)
@@ -45,15 +67,19 @@ namespace MolBase_Client
             Form.Text = "Редактирование информации о пользователе";
             Form.button1.Text = "Изменить";
 
+            // Получаем список лабораторий
+            GetLabs(Form);
+
             // Показываем окно
             Form.ShowDialog();
 
             // Если всё плохо – возвращаем false
-            return false;
+            return Form.FormAnswer;
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
+            FormAnswer = false;
             Close();
         }
 
@@ -68,6 +94,25 @@ namespace MolBase_Client
                 if (textBox5.Text == "") { MessageBox.Show("Введите или сгенерируйте пароль", "Ошибка"); return; }
             }
             if (textBox6.Text == "") { MessageBox.Show("Введите логин пользователя", "Ошибка"); return; }
+
+            if (status == 1)
+            {
+                List<string> Answer = Form1.Send_Get_Msg_To_Server("users.add", "name " + textBox2.Text +
+                    "\nsecond_name " + textBox3.Text +
+                    "\nsurname " + textBox1.Text +
+                    "\nlogin " + textBox6.Text +
+                    "\npassword " + textBox5.Text +
+                    "\nconfirm " + textBox4.Text +
+                    "\npermissions 1" +
+                    "\njob " + textBox7.Text +
+                    "\nlaboratory_id " + LabsID[comboBox1.SelectedIndex].ToString());
+                if (Answer[1] == "User added")
+                {
+                    FormAnswer = true;
+                    Close();
+                }
+                else MessageBox.Show(Answer[1], "Ошибка добавления пользователя");
+            }
         }
     }
 }

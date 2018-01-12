@@ -27,7 +27,7 @@ namespace MolBase_Client
         private void button1_Click(object sender, EventArgs e)
         {
             /*Login*/
-            List<string> Ans = Form1.Send_Get_Msg_To_Server(Form1.Login, textBox1.Text + "\n" + textBox2.Text);
+            List<string> Ans = Form1.Send_Get_Msg_To_Server(Form1.Login, "name " + textBox1.Text + "\npassword " + textBox2.Text);
 
             if (Ans[0] != Form1.StartMsg)
             {

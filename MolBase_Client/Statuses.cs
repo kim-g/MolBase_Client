@@ -7,7 +7,7 @@ namespace MolBase_Client
 {
     public class Statuses
     {
-        const string GetStatuses = "<@Get_Status_List@>";
+        const string GetStatuses = "database.status_list";
 
         List<MolStatus> Known_Statuses = new List<MolStatus>();
 

@@ -21,7 +21,7 @@ namespace MolBase_Client
         static public string EndMsg = "<@End_Of_Session@>";     // Конец сессии передачи ответа сервера
         static private string IP_Server = "195.19.140.174";     // IP сервера
 
-        const string Add_User = "<@Add_User@>";                 // Команда добавления пользователя
+        const string Add_User = "user.add";                 // Команда добавления пользователя
         public const string Login = "account.login";           // Команда входа в систему
         public const string FN_msg = "<@GetFileName@>";         // Команда получения имени файла (не используется)
         public const string LoginOK = "<@Login_OK@>";           // Ответ сервера об успешном входе в систему
@@ -36,10 +36,7 @@ namespace MolBase_Client
         public const string QuitMsg = "account.quit";  // Команда на выход пользователя
 
         // Текущий пользователь
-        static string UserName = "NoUser";
-        static string UserID = "NoUserID";
-        static int ID = 0;
-        static string UserFullName = "";
+        static CurrentUser CurUser;
 
         public static Statuses Known_Statuses;
 
@@ -60,25 +57,37 @@ namespace MolBase_Client
         private void Login_Show()
         {
             LoginForm LF = new LoginForm();
-            int Status = LF.LoginShow();
+            CurUser = LF.LoginShow();
 
-            switch (Status)
+            switch (CurUser.Special)
             {
                 case 0: //Статус: пользователь
                     button7.Visible = true;     // Добавить структуру
                     button6.Visible = true;     // Поиск по структуре
                     button1.Visible = false;    // Консоль для прямых команд серверу
                     button4.Visible = false;    // Показ новых заявок
-                    button9.Visible = false;    // Редактирование списка пользователей
+                    switch (CurUser.ShowMol)
+                    {
+                        case 0:
+                            button9.Visible = false;    // Редактирование списка пользователей
+                            break;
+                        case 1: 
+                        case 2:
+                            button9.Visible = true;    // Редактирование списка пользователей
+                            break;
+                        default:
+                            button9.Visible = false;    // Редактирование списка пользователей
+                            break;
+                    }
                     break;
-                case 1: //Статус: глобальный админ
+                case 2: //Статус: глобальный админ
                     button7.Visible = true;     // Добавить структуру
                     button6.Visible = true;     // Поиск по структуре
                     button1.Visible = true;     // Консоль для прямых команд серверу
                     button4.Visible = true;     // Показ новых заявок
                     button9.Visible = true;     // Редактирование списка пользователей
                     break;
-                case 2: //Статус: управляющий
+                case 1: //Статус: управляющий
                     button7.Visible = true;     // Добавить структуру
                     button6.Visible = true;     // Поиск по структуре
                     button1.Visible = false;    // Консоль для прямых команд серверу
@@ -89,6 +98,7 @@ namespace MolBase_Client
                     button7.Visible = true;     // Добавить структуру
                     button6.Visible = true;     // Поиск по структуре
                     button1.Visible = false;    // Консоль для прямых команд серверу
+                    button4.Visible = false;    // Показ новых заявок
                     button9.Visible = false;    // Редактирование списка пользователей
                     break;
             }
@@ -120,7 +130,7 @@ namespace MolBase_Client
                 { }
             }
 
-            label1.Text = "Здравствуйте, " + GetFullName() + ".";
+            label1.Text = "Здравствуйте, " + CurUser.FullNameSurname() + ".";
         }
 
         public static string TempFile()
@@ -145,7 +155,11 @@ namespace MolBase_Client
             // Соединяем сокет с удаленной точкой
             senderSocket.Connect(ipEndPoint);
 
-            byte[] msg = Encoding.UTF8.GetBytes(Command + "\n" + UserName + "\n" + UserID + "\n" + Parameters + " ");
+            string Login = CurUser == null ? "NoUser" : CurUser.Login;
+            string SessionCode = CurUser == null ? "NoUserID" : CurUser.SessionCode;
+
+            byte[] msg = Encoding.UTF8.GetBytes(Command + "\n" + Login + "\n" +
+                SessionCode + "\n" + Parameters + " ");
 
             // Отправляем данные через сокет
             byte[] msg_size = BitConverter.GetBytes(msg.Length);
@@ -174,8 +188,7 @@ namespace MolBase_Client
 
             if (Res[1] == NoLogin)
             {
-                UserID = "NoUserID";
-                UserName = "NoUser";
+                CurUser = null;
             }
 
             return Res;
@@ -222,36 +235,6 @@ namespace MolBase_Client
         {
             Add_Mol Add_Mol_Form = new Add_Mol();
             Add_Mol_Form.ShowDialog();
-        }
-
-        public static void SetUserID(string UID)
-        {
-            UserID = UID;
-        }
-
-        public static void SetLogin(string login)
-        {
-            UserName = login;
-        }
-
-        public static void SetFullName(string FullName)
-        {
-            UserFullName = FullName;
-        }
-
-        public static string GetFullName()
-        {
-            return UserFullName;
-        }
-
-        public static void SetID(int _ID)
-        {
-            ID = _ID;
-        }
-
-        public static int GetID()
-        {
-            return ID;
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -307,6 +290,8 @@ namespace MolBase_Client
 
         public static void GetFile(int ID, string InFileName="")
         {
+            if (CurUser == null) return;
+
             string GotFN = InFileName;
             if (InFileName == "")
             {
@@ -333,7 +318,8 @@ namespace MolBase_Client
             senderSocket.Connect(ipEndPoint);
 
 
-            byte[] msg = Encoding.UTF8.GetBytes("<@*Send_File*@>" + "\n" + UserName + "\n" + UserID + "\n" +
+            byte[] msg = Encoding.UTF8.GetBytes("<@*Send_File*@>" + "\n" + CurUser.Login + "\n" + 
+                CurUser.SessionCode + "\n" +
                 ID.ToString() + "\n" + " ");
 
             // Отправляем данные через сокет
@@ -411,7 +397,6 @@ namespace MolBase_Client
 
         private void button9_Click(object sender, EventArgs e)
         {
-            // Временно
             UserList.Show(this);
         }
     }

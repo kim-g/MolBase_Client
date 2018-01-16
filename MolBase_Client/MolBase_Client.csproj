@@ -82,6 +82,7 @@
     <Compile Include="ConsoleForm.Designer.cs">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="CurrentUser.cs" />
     <Compile Include="EditUser.cs">
       <SubType>Form</SubType>
     </Compile>

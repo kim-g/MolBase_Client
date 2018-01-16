@@ -31,12 +31,14 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.button1 = new System.Windows.Forms.Button();
             this.UsersTable = new System.Windows.Forms.DataGridView();
+            this.button2 = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.UsersTable)).BeginInit();
             this.SuspendLayout();
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.button2);
             this.panel1.Controls.Add(this.button1);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panel1.Location = new System.Drawing.Point(0, 342);
@@ -69,6 +71,15 @@
             this.UsersTable.TabIndex = 2;
             this.UsersTable.DoubleClick += new System.EventHandler(this.UsersTable_DoubleClick);
             // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(169, 11);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(175, 23);
+            this.button2.TabIndex = 1;
+            this.button2.Text = "Редактировать пользователя";
+            this.button2.UseVisualStyleBackColor = true;
+            // 
             // UserList
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -89,5 +100,6 @@
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.DataGridView UsersTable;
+        private System.Windows.Forms.Button button2;
     }
 }

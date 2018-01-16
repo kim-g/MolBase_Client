@@ -12,7 +12,9 @@ namespace MolBase_Client
     public partial class LoginForm : Form
     {
         int Status = 0;
+        string[] FullStatus;
         bool OK_Close = false;
+        CurrentUser CU = null;
 
         public LoginForm()
         {
@@ -53,28 +55,23 @@ namespace MolBase_Client
                 return;
             };
 
-            if (Ans[5] == Form1.Answer_Admin)
-            {
-                Status = 1;
-            }
-            if (Ans[5] == Form1.Answer_Manager)
-            {
-                Status = 2;
-            }
-
-            Form1.SetUserID( Ans[2] );
-            Form1.SetLogin( textBox1.Text );
-            Form1.SetID(Convert.ToInt32(Ans[3]));
-            Form1.SetFullName(Ans[4]);
+            CU = new CurrentUser(textBox1.Text);
+            CU.Name = Ans[4];
+            CU.SecondName = Ans[5];
+            CU.Surname = Ans[6];
+            CU.ID = Convert.ToInt32(Ans[3]);
+            CU.SessionCode = Ans[2];
+            CU.SetRights(Ans[7]);
             OK_Close = true;
+
             Close();
         }
 
-        public int LoginShow()
+        public CurrentUser LoginShow()
         {
             Status = 0;
             ShowDialog();
-            return Status;
+            return CU;
         }
 
         private void LoginForm_FormClosed(object sender, FormClosedEventArgs e)

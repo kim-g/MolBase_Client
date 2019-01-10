@@ -11,32 +11,25 @@ using System.Windows.Media.Imaging;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using Extentions;
 
 
 namespace MolBase_Client
 {
     public partial class Form1 : Form
     {
-        static public string StartMsg = "<@Begin_Of_Session@>"; // Начало сессии передачи ответа сервера
-        static public string EndMsg = "<@End_Of_Session@>";     // Конец сессии передачи ответа сервера
-        static private string IP_Server = "195.19.140.174";     // IP сервера
-
-        const string Add_User = "user.add";                 // Команда добавления пользователя
-        public const string Login = "account.login";           // Команда входа в систему
-        public const string FN_msg = "<@GetFileName@>";         // Команда получения имени файла (не используется)
-        public const string LoginOK = "<@Login_OK@>";           // Ответ сервера об успешном входе в систему
-        public const string NoLogin = "<Error 100: No such loged in user>";     // Ответ сервера о том, что имя пользователя-пароль не найдены
-        public const string Add_Mol = "molecules.add";       // Команда на добавление молекулы
-        public const string Search_Mol = "molecules.search";    // Команда поиска молекулы
-        public const string Answer_Admin = "AdminOK";           // Ответ сервера, что пользователь является админом
-        public const string Answer_Manager = "ManagerOK";           // Ответ сервера, что пользователь является управляющим
-        public const string Show_My_mol = "<@Show my molecules@>";  // УСТАРЕЛА!!! Использовать "molecules.search my"! Команда показать все молекулы пользователя
-        public const string Increase_Status = "<@Increase status@>"; // Увеличеть значение статуса соединения
-        public const string Show_New_Mol = "<@Show new molecules@>";  // Команда показать все молекулы новые
-        public const string QuitMsg = "account.quit";  // Команда на выход пользователя
-
         // Текущий пользователь
-        static CurrentUser CurUser;
+        private static CurrentUser _CurUser;
+        public static CurrentUser CurUser
+        {
+            get { return _CurUser; }
+            set
+            {
+                _CurUser = value;
+                ServerCommunication.UserLogin = _CurUser == null ? "" : _CurUser.Login;
+                ServerCommunication.UserSecureCode = _CurUser == null ? "" : _CurUser.SessionCode;
+            }
+        }
 
         public static Statuses Known_Statuses;
 
@@ -51,7 +44,7 @@ namespace MolBase_Client
 
         private void OnApplicationExit(object sender, EventArgs e)
         {
-            Send_Get_Msg_To_Server(QuitMsg);
+            ServerCommunication.Send_Get_Msg_To_Server(ServerCommunication.Commands.QuitMsg);
         }
 
         private void Login_Show()
@@ -59,6 +52,7 @@ namespace MolBase_Client
             LoginForm LF = new LoginForm();
             CurUser = LF.LoginShow();
 
+            if (CurUser == null) return;
             switch (CurUser.Special)
             {
                 case 0: //Статус: пользователь
@@ -133,98 +127,6 @@ namespace MolBase_Client
             label1.Text = "Здравствуйте, " + CurUser.FullNameSurname() + ".";
         }
 
-        public static string TempFile()
-        {
-            Random rnd = new Random();
-            return Path.GetTempPath() + "MolBase\\MolBase" + rnd.Next(1000000, 9999999).ToString() + ".tmp";
-        }
-
-        static public List<string> Send_Get_Msg_To_Server(string Command, string Parameters = "", byte[] BinarInfo = null)
-        {
-            // Буфер для входящих данных
-            byte[] bytes = new byte[1024];
-            int port = 11000;
-            IPAddress ipAddr = IPAddress.Parse(IP_Server);
-            List<string> Res;
-
-            // Соединяемся с удаленным устройством
-            IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, port);
-
-            Socket senderSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-            // Соединяем сокет с удаленной точкой
-            senderSocket.Connect(ipEndPoint);
-
-            string Login = CurUser == null ? "NoUser" : CurUser.Login;
-            string SessionCode = CurUser == null ? "NoUserID" : CurUser.SessionCode;
-
-            byte[] msg = Encoding.UTF8.GetBytes(Command + "\n" + Login + "\n" +
-                SessionCode + "\n" + Parameters + " ");
-
-            // Отправляем данные через сокет
-            byte[] msg_size = BitConverter.GetBytes(msg.Length);
-            int bytesSentS = senderSocket.Send(msg_size);
-            int bytesSent = senderSocket.Send(msg);
-            if (BinarInfo != null)
-            {
-                MemoryStream ms = new MemoryStream(BinarInfo);
-                for (int i = 0; i < BinarInfo.Count(); i += 1024)
-                {
-                    int Size = 1024;
-                    if (BinarInfo.Count() - i < 1024) { Size = BinarInfo.Count() - i; }
-                    byte[] Block = new byte[Size];
-                    ms.Read(Block, 0, Size);
-                    senderSocket.Send(Block);
-                }
-                //senderSocket.Send(BinarInfo);
-            }
-
-            // Получаем ответ от сервера
-            Res = Get_ListString_from_bytes(bytes, senderSocket);
-
-            // Освобождаем сокет
-            senderSocket.Shutdown(SocketShutdown.Both);
-            senderSocket.Close();
-
-            if (Res[1] == NoLogin)
-            {
-                CurUser = null;
-            }
-
-            return Res;
-        }
-
-        private static List<string> Get_ListString_from_bytes(byte[] bytes, Socket senderSocket)
-        {
-            List<string> Res = new List<string>();
-            bool Stop = false;
-            do
-            {
-                int bytesRec = senderSocket.Receive(bytes);
-                string ResList = Encoding.UTF8.GetString(bytes, 0, bytesRec);
-                Res.AddRange( Parce_StringList(ref Stop, ResList));
-            }
-            while (!Stop);
-
-            return Res;
-        }
-
-        private static List<string> Parce_StringList(ref bool Stop, string ResList)
-        {
-            string ResMsg = "";
-            List<string> Res = new List<string>();
-            string[] ResArray = ResList.Split("\n"[0]);
-            for (int i = 0; i < ResArray.Count(); i++)
-            {
-                ResMsg = ResArray[i];
-                if (ResMsg == "") { continue; };
-                if (ResMsg == "<@None@>") { Res.Add(""); continue; };
-                Res.Add(ResMsg);
-                if (ResMsg == EndMsg) { Stop = true; };
-            }
-            return Res;
-        }
-
         private void button6_Click(object sender, EventArgs e)
         {
             SubStructureSearch SSS = new SubStructureSearch();
@@ -248,120 +150,10 @@ namespace MolBase_Client
             CF.Show();
         }
 
-        public static string SaveFileAs(string FileName)
-        {
-            using (var sfd = new SaveFileDialog())
-            {
-                // Задаём нужные параметры
-                string FF = Path.GetExtension(FileName);
-                string FFName = "*" + FF;
-                if (FF == ".doc") FFName = "Документ Microsoft Word 97-2003 (*.doc)";
-                if (FF == ".docx") FFName = "Документ Microsoft Word (*.docx)";
-                if (FF == ".xls") FFName = "Документ Microsoft Excel 97-2003 (*.xls)";
-                if (FF == ".xlsx") FFName = "Документ Microsoft Excel (*.xlsx)";
-                if (FF == ".pdf") FFName = "Документ Portable Document Format (*.pdf)";
-                if (FF == ".jpg") FFName = "Изображение в формате JPEG (*.jpg)";
-                if (FF == ".png") FFName = "Изображение в формате Portable Network Graphics (*.png)";
-                sfd.Filter = FFName + "|*" + FF;
-                sfd.FileName = FileName;
-                sfd.AddExtension = true;
-                if (sfd.ShowDialog() == DialogResult.OK)
-                {
-                    return sfd.FileName;
-                }
-                return "<Cancel>";
-            }
-        }
-
-        public static string OpenFile()
-        {
-            using (var ofd = new OpenFileDialog())
-            {
-                ofd.Filter = "Все файлы (*.*)|*.*";
-                ofd.AddExtension = true;
-                if (ofd.ShowDialog() == DialogResult.OK)
-                {
-                    return ofd.FileName;
-                }
-                return "<Cancel>";
-            }
-        }
-
-
-        public static void GetFile(int ID, string InFileName="")
-        {
-            if (CurUser == null) return;
-
-            string GotFN = InFileName;
-            if (InFileName == "")
-            {
-                List<string> FN = Send_Get_Msg_To_Server(FN_msg, ID.ToString());
-                GotFN = FN[1];
-            }
-            
-            // Спрашиваем, куда сохранить. Если отменяем, то отменяем полностью, не спрашивая сервер.
-            string FileName = SaveFileAs(GotFN);
-            if (FileName == "<Cancel>")
-            {
-                return;
-            }     // Если пользователь отменил, то прекращаем всё.
-
-            int port = 11000;
-            IPAddress ipAddr = IPAddress.Parse(IP_Server);
-
-            // Соединяемся с удаленным устройством
-            IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, port);
-
-            Socket senderSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-            // Соединяем сокет с удаленной точкой
-            senderSocket.Connect(ipEndPoint);
-
-
-            byte[] msg = Encoding.UTF8.GetBytes("<@*Send_File*@>" + "\n" + CurUser.Login + "\n" + 
-                CurUser.SessionCode + "\n" +
-                ID.ToString() + "\n" + " ");
-
-            // Отправляем данные через сокет
-            int bytesSentS = senderSocket.Send(BitConverter.GetBytes(msg.Length));
-            int bytesSent = senderSocket.Send(msg);
-
-            // Получаем длину текстовой записи
-            byte[] SL_Size = new byte[4];
-            senderSocket.Receive(SL_Size);
-            int StringList_Size = BitConverter.ToInt32(SL_Size, 0);
-
-            // Получаем текстовую запись
-            byte[] SL = new byte[StringList_Size];
-            senderSocket.Receive(SL);
-            bool Stop = false;
-            List<string> F_Size = Parce_StringList(ref Stop, Encoding.UTF8.GetString(SL, 0, StringList_Size));
-
-            // Получаем и записываем в файл по кусочкам
-            FileStream fs = new FileStream(FileName, FileMode.Create, FileAccess.Write);
-
-            int FtR_Size = Convert.ToInt32(F_Size[2]);
-            for (int i = 0; i < FtR_Size; i += 1024)
-            {
-                int block;
-                if (FtR_Size - i < 1024) { block = FtR_Size - i; }
-                else { block = 1024; }
-                byte[] buf = new byte[block];
-                senderSocket.Receive(buf);
-                fs.Write(buf, 0, block);
-                fs.Flush();
-            }
-            fs.Close();
-
-            // Освобождаем сокет
-            senderSocket.Shutdown(SocketShutdown.Both);
-            senderSocket.Close();
-        }
-
         private void button5_Click(object sender, EventArgs e)
         {
             Visible = false;
-            Send_Get_Msg_To_Server(QuitMsg);
+            ServerCommunication.Send_Get_Msg_To_Server(ServerCommunication.Commands.QuitMsg);
             Login_Show();
             Visible = true;
         }
@@ -374,20 +166,17 @@ namespace MolBase_Client
         private static void Get_Molecule_List(string Message, string Parameters = "")
         {
             // Запрашиваем сервер и получаем ответ
-            List<string> Answer = Send_Get_Msg_To_Server(Message, Parameters);
+            List<string> Answer = ServerCommunication.Send_Get_Msg_To_Server(Message, Parameters);
 
             // Преобразуем ответ в список молекул
-            List<Molecule> Mols = Functions.GetMolListFromServerAnswer(Answer);
-
             // И покажем окно со списком.
-            MoleculesList ML = new MoleculesList();
-            ML.DrawList(Mols);
-            ML.ShowDialog();
+            MoleculesList ML = new MoleculesList(Functions.GetMolListFromServerAnswer(Answer));
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
-            Get_Molecule_List(Show_New_Mol);
+            Get_Molecule_List(ServerCommunication.Commands.Show_New_Mol, 
+                ServerCommunication.Commands.Show_New_Mol_Param);
         }
 
         private void Form1_Load(object sender, EventArgs e)

@@ -57,11 +57,11 @@ namespace MolBase_Client
             switch (Rights[2])
             {
                 case "null":
-                    AddMol = 0; break;
+                    Special = 0; break;
                 case "manager":
-                    AddMol = 1; break;
+                    Special = 1; break;
                 case "admin":
-                    AddMol = 2; break;
+                    Special = 2; break;
             }
         }
     }

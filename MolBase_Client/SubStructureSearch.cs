@@ -67,7 +67,7 @@ namespace MolBase_Client
             obconv.AddOption("w", OBConversion.Option_type.OUTOPTIONS, panel1.Width.ToString());
             obconv.AddOption("h", OBConversion.Option_type.OUTOPTIONS, panel1.Height.ToString());
 
-            string TempPic = Form1.TempFile();
+            string TempPic = Functions.TempFile();
             obconv.WriteFile(mol, TempPic); // Пишем картинку в temp // Это такое колдунство // Мне стыдно, но по-другому не выходит
             obconv.CloseOutFile();
 
@@ -104,7 +104,8 @@ namespace MolBase_Client
             obconv.ReadFile(molec, textBox1.Text);
 
             // Запрашиваем сервер и получаем ответ
-            List<string> Answer = Form1.Send_Get_Msg_To_Server(Form1.Search_Mol, 
+            List<string> Answer = ServerCommunication.Send_Get_Msg_To_Server(
+                ServerCommunication.Commands.Search_Mol, 
                 "structure " + obconv.WriteString(molec) + " ");
 
             Mols = Functions.GetMolListFromServerAnswer(Answer);

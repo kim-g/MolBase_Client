@@ -40,7 +40,7 @@ namespace MolBase_Client
             obconv.AddOption("h", OBConversion.Option_type.OUTOPTIONS, panel1.Height.ToString());
             
             Random rnd = new Random();
-            string TempPic = Form1.TempFile();
+            string TempPic = Functions.TempFile();
             obconv.WriteFile(mol, TempPic); // Пишем картинку в temp // Это такое колдунство // Мне стыдно, но по-другому не выходит
             obconv.CloseOutFile();
 
@@ -167,7 +167,9 @@ namespace MolBase_Client
 
 
 
-            List<string> Answer = Form1.Send_Get_Msg_To_Server(Form1.Add_Mol, ListOfStringToString(message));
+            List<string> Answer = ServerCommunication.Send_Get_Msg_To_Server(
+                ServerCommunication.Commands.Add_Mol, 
+                ListOfStringToString(message));
 
             if (Answer[1]== "Add_Molecule: done")
             {

@@ -84,13 +84,13 @@ namespace MolBase_Client
         {
             if (FilesList.SelectedIndex == -1) { return; }
 
-            Form1.GetFile(FileIDs[FilesList.SelectedIndex]);
+            ServerCommunication.GetFile(FileIDs[FilesList.SelectedIndex]);
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
             // Выбор файла
-            string FileName = Form1.OpenFile();     if (FileName == "<Cancel>") return;
+            string FileName = Functions.OpenFile();     if (FileName == "<Cancel>") return;
             string FileNameShort = Path.GetFileName(FileName);
             // Наименование файла
             string Name = Input_String.GetString("Название файла", "Название сохраняемого файла");
@@ -104,8 +104,9 @@ namespace MolBase_Client
             fs.Flush();
             fs.Close();
 
-            List<string> Answer = Form1.Send_Get_Msg_To_Server("<@*Get_File*@>", FileNameShort + "\n" + Name + 
-                "\n" + data.Length.ToString() + "\n" + CurrentMolecule.ID.ToString(), data);
+            List<string> Answer = ServerCommunication.Send_Get_Msg_To_Server("file.send", 
+                "filename " + FileNameShort + "\ncaption " + Name + 
+                "\nsize " + data.Length.ToString() + "\nmolecule " + CurrentMolecule.ID.ToString(), data);
 
             // Просмотр ответа и добавление файла в список
             FilesList.Items.Add(Name);
@@ -122,7 +123,9 @@ namespace MolBase_Client
 
             // Если да
             // Отправим серверу запрос
-            List<string> Answer = Form1.Send_Get_Msg_To_Server(Form1.Increase_Status, CurrentMolecule.ID.ToString());
+            List<string> Answer = ServerCommunication.Send_Get_Msg_To_Server(
+                ServerCommunication.Commands.Increase_Status,
+                "molecule " + CurrentMolecule.ID.ToString());
 
             // Если сервер благополучно изменил, то
             if (Answer[1] == "OK")

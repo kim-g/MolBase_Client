@@ -36,6 +36,13 @@ namespace MolBase_Client
             InitializeComponent();
         }
 
+        public MoleculesList(List<Molecule> Mols)
+        {
+            InitializeComponent();
+            DrawList(Mols);
+            ShowDialog();
+        }
+
         public void DrawMyList()
         {
             // Очищаем Elements
@@ -75,7 +82,7 @@ namespace MolBase_Client
             obconv.AddOption("w", OBConversion.Option_type.OUTOPTIONS, BMP_Width.ToString());
             obconv.AddOption("h", OBConversion.Option_type.OUTOPTIONS, (BMP_Height - TextPanel).ToString());
             // Получаем файл с картинкой
-            string TempPic = Form1.TempFile();
+            string TempPic = Functions.TempFile();
             obconv.WriteFile(Mol.Structure, TempPic);
             obconv.CloseOutFile();
 

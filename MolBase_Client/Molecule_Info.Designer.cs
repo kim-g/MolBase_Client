@@ -39,8 +39,8 @@
             this.panel4 = new System.Windows.Forms.Panel();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.panel5 = new System.Windows.Forms.Panel();
-            this.button4 = new System.Windows.Forms.Button();
             this.StatusLabel = new System.Windows.Forms.Label();
+            this.button4 = new System.Windows.Forms.Button();
             this.panel3 = new System.Windows.Forms.Panel();
             this.button2 = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
@@ -159,6 +159,15 @@
             this.panel5.Size = new System.Drawing.Size(448, 68);
             this.panel5.TabIndex = 1;
             // 
+            // StatusLabel
+            // 
+            this.StatusLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.StatusLabel.Location = new System.Drawing.Point(0, 0);
+            this.StatusLabel.Name = "StatusLabel";
+            this.StatusLabel.Size = new System.Drawing.Size(448, 31);
+            this.StatusLabel.TabIndex = 0;
+            this.StatusLabel.Text = "label4";
+            // 
             // button4
             // 
             this.button4.AutoSize = true;
@@ -170,15 +179,6 @@
             this.button4.Text = "Повысить";
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.button4_Click);
-            // 
-            // StatusLabel
-            // 
-            this.StatusLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.StatusLabel.Location = new System.Drawing.Point(0, 0);
-            this.StatusLabel.Name = "StatusLabel";
-            this.StatusLabel.Size = new System.Drawing.Size(448, 68);
-            this.StatusLabel.TabIndex = 0;
-            this.StatusLabel.Text = "label4";
             // 
             // panel3
             // 

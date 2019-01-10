@@ -18,7 +18,7 @@ namespace MolBase_Client
             obconv.ReadString(Structure, SMILES);
             Structure.SetTitle(name);
             obconv.SetOutFormat("_png2");
-            string TempPic = Form1.TempFile();
+            string TempPic = Functions.TempFile();
             obconv.WriteFile(Structure, TempPic); // Пишем картинку в temp // Это такое колдунство // Мне стыдно, но по-другому не выходит
             obconv.CloseOutFile();
             Picture = Image.FromFile(TempPic);

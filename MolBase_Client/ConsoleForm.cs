@@ -18,7 +18,8 @@ namespace MolBase_Client
 
         private void button1_Click(object sender, EventArgs e)
         {
-            List<string> Ans = Form1.Send_Get_Msg_To_Server(textBox1.Text, textBox2.Text);
+            List<string> Ans = ServerCommunication.Send_Get_Msg_To_Server(textBox1.Text, 
+                textBox2.Text);
             Ans.RemoveAt(0);
             Ans.RemoveAt(Ans.Count - 1);
 

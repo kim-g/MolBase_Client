@@ -11,8 +11,6 @@ namespace MolBase_Client
 {
     public partial class LoginForm : Form
     {
-        int Status = 0;
-        string[] FullStatus;
         bool OK_Close = false;
         CurrentUser CU = null;
 
@@ -29,9 +27,10 @@ namespace MolBase_Client
         private void button1_Click(object sender, EventArgs e)
         {
             /*Login*/
-            List<string> Ans = Form1.Send_Get_Msg_To_Server(Form1.Login, "name " + textBox1.Text + "\npassword " + textBox2.Text);
+            List<string> Ans = ServerCommunication.Send_Get_Msg_To_Server(ServerCommunication.Commands.Login, 
+                "name " + textBox1.Text + "\npassword " + textBox2.Text);
 
-            if (Ans[0] != Form1.StartMsg)
+            if (Ans[0] != ServerCommunication.Answers.StartMsg)
             {
                 MessageBox.Show("Ошибка 3 – Неожиданный ответ сервера: «" + Ans[0] + "»",
                 "Ошибка ответа сервера");
@@ -48,7 +47,7 @@ namespace MolBase_Client
                 return;
             }
 
-            if (Ans[1] != Form1.LoginOK)
+            if (Ans[1] != ServerCommunication.Answers.LoginOK)
             {
                 MessageBox.Show("Ошибка 3 – Неожиданный ответ сервера: «" + Ans[1] + "»",
                 "Ошибка ответа сервера");
@@ -69,7 +68,6 @@ namespace MolBase_Client
 
         public CurrentUser LoginShow()
         {
-            Status = 0;
             ShowDialog();
             return CU;
         }

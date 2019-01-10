@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using Extentions;
 
 namespace MolBase_Client
 {
@@ -30,26 +31,7 @@ namespace MolBase_Client
 
         private void LoadList()
         {
-            List<string> UserListString = Form1.Send_Get_Msg_To_Server("users.list");
-            Users = new List<User>();
-            for (int i = 3; i < UserListString.Count - 1;)
-            {
-                bool NotReady = true;
-                string StringToWork = "";
-                string[] Params;
-                do
-                {
-                    StringToWork += UserListString[i];
-                    Params = StringToWork.Split('|');
-                    NotReady = Params.Count() < 9;
-                    i++;
-                }
-                while (NotReady);
-                Users.Add(new User(Params[1], Params[2], Params[3], Params[4], Params[5], Params[6],
-                    Params[7], Params[8]));
-            }
-
-            Users.Sort(new Compare_User("ID"));
+            Users = Functions.GetUserList();
             UsersTable.DataSource = UsersToTable();
             UsersTable.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         }
@@ -85,14 +67,22 @@ namespace MolBase_Client
             if (UsersTable.SelectedRows.Count == 0) return;
 
             // Запрашиваем сервер и получаем ответ
-            List<string> Answer = Form1.Send_Get_Msg_To_Server(Form1.Search_Mol, 
-                "user " + UsersTable.SelectedRows[0].Cells[0].Value);
+            List<string> Answer = ServerCommunication.Send_Get_Msg_To_Server(
+                Command: ServerCommunication.Commands.Search_Mol,
+                Parameters: "user " + UsersTable.SelectedRows[0].Cells[0].Value);
 
            List<Molecule> Mols = Functions.GetMolListFromServerAnswer(Answer);
 
             MoleculesList ML = new MoleculesList();
             ML.DrawList(Mols);
             ML.ShowDialog();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (UsersTable.SelectedRows.Count == 0) return;
+            if (EditUser.Edit(this, UsersTable.SelectedRows[0].Cells[0].Value.To<int>()))
+                LoadList();
         }
     }
 
@@ -110,14 +100,14 @@ namespace MolBase_Client
         public User(string id, string surname, string name, string second_name, string login, 
             string laboratory, string job, string permissions)
         {
-            ID = Convert.ToInt32(id);
+            ID = id.ToInt();
             Surname = surname.Trim();
             Name = name.Trim();
             SecondName = second_name.Trim();
             Login = login.Trim();
             Lab = laboratory.Trim();
             Job = job.Trim();
-            Permissions = Convert.ToInt32(permissions);
+            Permissions = permissions.ToInt();
         }
     }
 

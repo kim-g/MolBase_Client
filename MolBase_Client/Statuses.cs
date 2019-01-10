@@ -7,17 +7,16 @@ namespace MolBase_Client
 {
     public class Statuses
     {
-        const string GetStatuses = "database.status_list";
-
         List<MolStatus> Known_Statuses = new List<MolStatus>();
 
         public Statuses()
         {
-            List<string> Answer = Form1.Send_Get_Msg_To_Server(GetStatuses, "");
+            List<string> Answer = ServerCommunication.Send_Get_Msg_To_Server(
+                ServerCommunication.Commands.GetStatuses, "");
             for (int i = 0; i < Answer.Count; i++)
             {
-                if (Answer[i] == Form1.StartMsg) continue;
-                if (Answer[i] == Form1.EndMsg) continue;
+                if (Answer[i] == ServerCommunication.Answers.StartMsg) continue;
+                if (Answer[i] == ServerCommunication.Answers.EndMsg) continue;
 
                 MolStatus NewStatus = new MolStatus(Convert.ToInt32(Answer[i++]),
                     Answer[i++], Answer[i] == "" ? -1 : Convert.ToInt32(Answer[i]));

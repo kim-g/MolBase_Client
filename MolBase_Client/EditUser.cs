@@ -45,7 +45,7 @@ namespace MolBase_Client
             Form.comboBox1.Items.Clear();
             Form.LabsID = new List<int>();
 
-            List<string> Labs = Form1.Send_Get_Msg_To_Server("laboratories.names");
+            List<string> Labs = ServerCommunication.Send_Get_Msg_To_Server("laboratories.names");
             if (Labs.Count < 3) { Form.comboBox1.Items.Add("Нет лабораторий в базе данных"); return; }
 
             for (int i = 1; i < Labs.Count-1; i++) //Игнорируем первую и последнюю записи
@@ -57,8 +57,12 @@ namespace MolBase_Client
  
         }
 
-        public static bool Edit(int UserID)
+        public static bool Edit(IWin32Window Owner, int UserID)
         {
+            // Получаем список пользователей.
+            List<User> Users = Functions.GetUserList("id " + UserID.ToString());
+            if (Users.Count < 1) return false;
+
             // Создаём новое окно
             EditUser Form = new EditUser();
             Form.status = 2;
@@ -70,8 +74,13 @@ namespace MolBase_Client
             // Получаем список лабораторий
             GetLabs(Form);
 
+            // Заполняем данные
+            Form.textBox1.Text = Users[0].Surname;
+            Form.textBox2.Text = Users[0].Name;
+            Form.textBox3.Text = Users[0].SecondName;
+
             // Показываем окно
-            Form.ShowDialog();
+            Form.ShowDialog(Owner);
 
             // Если всё плохо – возвращаем false
             return Form.FormAnswer;
@@ -97,7 +106,8 @@ namespace MolBase_Client
 
             if (status == 1)
             {
-                List<string> Answer = Form1.Send_Get_Msg_To_Server("users.add", "name " + textBox2.Text +
+                List<string> Answer = ServerCommunication.Send_Get_Msg_To_Server("users.add", 
+                    "name " + textBox2.Text +
                     "\nsecond_name " + textBox3.Text +
                     "\nsurname " + textBox1.Text +
                     "\nlogin " + textBox6.Text +

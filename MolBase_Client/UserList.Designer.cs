@@ -29,9 +29,9 @@
         private void InitializeComponent()
         {
             this.panel1 = new System.Windows.Forms.Panel();
+            this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.UsersTable = new System.Windows.Forms.DataGridView();
-            this.button2 = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.UsersTable)).BeginInit();
             this.SuspendLayout();
@@ -45,6 +45,16 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(787, 46);
             this.panel1.TabIndex = 0;
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(169, 11);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(175, 23);
+            this.button2.TabIndex = 1;
+            this.button2.Text = "Редактировать пользователя";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // button1
             // 
@@ -70,15 +80,6 @@
             this.UsersTable.Size = new System.Drawing.Size(787, 342);
             this.UsersTable.TabIndex = 2;
             this.UsersTable.DoubleClick += new System.EventHandler(this.UsersTable_DoubleClick);
-            // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(169, 11);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(175, 23);
-            this.button2.TabIndex = 1;
-            this.button2.Text = "Редактировать пользователя";
-            this.button2.UseVisualStyleBackColor = true;
             // 
             // UserList
             // 

@@ -12,8 +12,9 @@ namespace MolBase_Client
     public partial class EditUser : Form
     {
         int status = 0; // 0 - ERROR, 1 - ADD, 2 - EDIT
-        List<int> LabsID;
+        Dictionary<int, string> LabsID;
         bool FormAnswer = false;
+        User OldInfo;
 
         public EditUser()
         {
@@ -33,6 +34,9 @@ namespace MolBase_Client
             // Получаем список лабораторий
             GetLabs(Form);
 
+            // Скрыть кнопку изменения пароля
+            Form.ChangePasswordBtn.Visible = false;
+
             // Показываем окно
             Form.ShowDialog(Owner);
 
@@ -43,7 +47,7 @@ namespace MolBase_Client
         private static void GetLabs(EditUser Form)
         {
             Form.comboBox1.Items.Clear();
-            Form.LabsID = new List<int>();
+            Form.LabsID = new Dictionary<int, string>();
 
             List<string> Labs = ServerCommunication.Send_Get_Msg_To_Server("laboratories.names");
             if (Labs.Count < 3) { Form.comboBox1.Items.Add("Нет лабораторий в базе данных"); return; }
@@ -52,7 +56,7 @@ namespace MolBase_Client
             {
                 string[] Val = Labs[i].Split('=');
                 Form.comboBox1.Items.Add(Val[1]);
-                Form.LabsID.Add(Convert.ToInt32(Val[0]));
+                Form.LabsID.Add(Convert.ToInt32(Val[0]), Val[1]);
             }
  
         }
@@ -65,6 +69,7 @@ namespace MolBase_Client
 
             // Создаём новое окно
             EditUser Form = new EditUser();
+            Form.OldInfo = Users[0];
             Form.status = 2;
 
             // Правим тексты под добавление пользователя
@@ -75,9 +80,18 @@ namespace MolBase_Client
             GetLabs(Form);
 
             // Заполняем данные
-            Form.textBox1.Text = Users[0].Surname;
-            Form.textBox2.Text = Users[0].Name;
-            Form.textBox3.Text = Users[0].SecondName;
+            Form.textBox1.Text = Form.OldInfo.Surname;
+            Form.textBox2.Text = Form.OldInfo.Name;
+            Form.textBox3.Text = Form.OldInfo.SecondName;
+            Form.textBox6.Text = Form.OldInfo.Login;
+            Form.textBox6.Enabled = false;
+            Form.textBox7.Text = Form.OldInfo.Job;
+            Form.textBox5.Visible = false;
+            Form.textBox4.Visible = false;
+            Form.label5.Visible = false;
+            Form.ChangePasswordBtn.Enabled = Form1.CurUser.Special > 0;
+            Form.comboBox1.SelectedItem = Form.OldInfo.Lab;
+
 
             // Показываем окно
             Form.ShowDialog(Owner);
@@ -97,16 +111,17 @@ namespace MolBase_Client
             // Проверим, что всё, что нужно, введено
             if (textBox1.Text == "") { MessageBox.Show("Введите фамилию пользователя","Ошибка"); return; }
             if (textBox2.Text == "") { MessageBox.Show("Введите имя пользователя", "Ошибка"); return; }
-            if (status == 2)
+            if (status == 1)
             {
-                if (textBox4.Text == "") { MessageBox.Show("Введите подтверждение пароля", "Ошибка"); return; }
                 if (textBox5.Text == "") { MessageBox.Show("Введите или сгенерируйте пароль", "Ошибка"); return; }
+                if (textBox4.Text == "") { MessageBox.Show("Введите подтверждение пароля", "Ошибка"); return; }
             }
             if (textBox6.Text == "") { MessageBox.Show("Введите логин пользователя", "Ошибка"); return; }
 
-            if (status == 1)
+            switch (status)
             {
-                List<string> Answer = ServerCommunication.Send_Get_Msg_To_Server("users.add", 
+                case 1:
+                    List<string> Answer = ServerCommunication.Send_Get_Msg_To_Server("users.add",
                     "name " + textBox2.Text +
                     "\nsecond_name " + textBox3.Text +
                     "\nsurname " + textBox1.Text +
@@ -116,12 +131,51 @@ namespace MolBase_Client
                     "\npermissions 1" +
                     "\njob " + textBox7.Text +
                     "\nlaboratory_id " + LabsID[comboBox1.SelectedIndex].ToString());
-                if (Answer[1] == "User added")
-                {
-                    FormAnswer = true;
-                    Close();
-                }
-                else MessageBox.Show(Answer[1], "Ошибка добавления пользователя");
+                    if (Answer[1] == "User added")
+                    {
+                        FormAnswer = true;
+                        Close();
+                    }
+                    else MessageBox.Show(Answer[1], "Ошибка добавления пользователя");
+                    break;
+                case 2:
+                    string Params = "";
+                    if (textBox1.Text != OldInfo.Surname) Params += textBox1.Text != "" 
+                            ? "\nsurname " + textBox1.Text
+                            : "\nsurname {CLEAR}";
+                    if (textBox2.Text != OldInfo.Name) Params += textBox2.Text != ""
+                            ? "\nname " + textBox2.Text
+                            : "\nname {CLEAR}";
+                    if (textBox3.Text != OldInfo.SecondName) Params += textBox3.Text != ""
+                            ? "\nsecond_name " + textBox3.Text
+                            : "\nsecond_name {CLEAR}";
+                    if (comboBox1.SelectedItem.ToString() != OldInfo.Lab)
+                    {
+                        int LabID = LabsID.Where(x => x.Value == comboBox1.SelectedItem.ToString()).FirstOrDefault().Key;
+
+                        Params += "\nlaboratory_id " +
+                            LabID.ToString();
+                    }
+                    if (textBox7.Text != OldInfo.Job) Params += textBox7.Text != ""
+                            ? "\njob " + textBox7.Text
+                            : "\njob {CLEAR}";
+
+                    if (Params == "")
+                    {
+                        FormAnswer = true;
+                        Close();
+                        return;
+                    }
+                    Params += "\nlogin " + textBox6.Text;
+
+                    List<string> AnswerEdit = ServerCommunication.Send_Get_Msg_To_Server("users.update", Params);
+                    if (AnswerEdit[1] == "User information updated")
+                    {
+                        FormAnswer = true;
+                        Close();
+                    }
+                    else MessageBox.Show(AnswerEdit[1], "Ошибка добавления пользователя");
+                    break;
             }
         }
     }

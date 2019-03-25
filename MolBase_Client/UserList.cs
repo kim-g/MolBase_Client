@@ -84,6 +84,21 @@ namespace MolBase_Client
             if (EditUser.Edit(this, UsersTable.SelectedRows[0].Cells[0].Value.To<int>()))
                 LoadList();
         }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (UsersTable.SelectedRows.Count == 0) return;
+            if (MessageBox.Show($"Вы уверены, что хотите удалить пользователя {UsersTable.SelectedRows[0].Cells[1].Value}?", "Удаление пользователя",
+                MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                List<string> Answer = ServerCommunication.Send_Get_Msg_To_Server("users.remove", 
+                    $"id {UsersTable.SelectedRows[0].Cells[0].Value}");
+                if (Answer[1] == "User was removed successfully")
+                    LoadList();
+                else
+                    MessageBox.Show(Answer[1], "Ошибка");
+            }
+        }
     }
 
     public class User
@@ -106,7 +121,7 @@ namespace MolBase_Client
             SecondName = second_name.Trim();
             Login = login.Trim();
             Lab = laboratory.Trim();
-            Job = job.Trim();
+            Job = job?.Trim();
             Permissions = permissions.ToInt();
         }
     }

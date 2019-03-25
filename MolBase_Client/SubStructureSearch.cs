@@ -19,6 +19,9 @@ namespace MolBase_Client
 
         private void button1_Click(object sender, EventArgs e)
         {
+            OD.Filter = Functions.AllFormats.GetFilter();
+            foreach (MoleculeFormat MF in Functions.Formats)
+                OD.Filter += $" | {MF.GetFilter()}";
             OD.ShowDialog();
             textBox1.Text = OD.FileName;
             OpenStructure(textBox1.Text);
@@ -36,9 +39,9 @@ namespace MolBase_Client
             string[] strings = (string[])e.Data.GetData(DataFormats.FileDrop, true);
 
             string File1 = strings[0];
-            if (Path.GetExtension(File1) != ".cdx")
+            if (!Functions.CheckFile(File1))
             {
-                MessageBox.Show("Можно использовать только файл ChemDraw (cdx)\n"+ Path.GetExtension(File1), "Ошибка");
+                MessageBox.Show("Неподдерживаемый формат файла", "Ошибка");
                 return;
             }
             textBox1.Text = File1;
@@ -59,11 +62,8 @@ namespace MolBase_Client
         {
             // Создаём OpenBabel объекты
             OBConversion obconv = new OBConversion();
-            obconv.SetInFormat("cdx"); //Читаем ChemDraw файл (Потом расширить список)
-            OBMol mol = new OBMol();
-            obconv.ReadFile(mol, StName);  //Читаем из файла
+            OBMol mol = Functions.ReadMoleculeFromFile(StName);
             obconv.SetOutFormat("_png2");
-            mol.SetTitle("");
             obconv.AddOption("w", OBConversion.Option_type.OUTOPTIONS, panel1.Width.ToString());
             obconv.AddOption("h", OBConversion.Option_type.OUTOPTIONS, panel1.Height.ToString());
 

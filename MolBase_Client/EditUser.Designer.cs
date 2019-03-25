@@ -46,6 +46,7 @@
             this.textBox7 = new System.Windows.Forms.TextBox();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
+            this.ChangePasswordBtn = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // textBox1
@@ -213,6 +214,15 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
+            // ChangePasswordBtn
+            // 
+            this.ChangePasswordBtn.Location = new System.Drawing.Point(124, 216);
+            this.ChangePasswordBtn.Name = "ChangePasswordBtn";
+            this.ChangePasswordBtn.Size = new System.Drawing.Size(289, 28);
+            this.ChangePasswordBtn.TabIndex = 18;
+            this.ChangePasswordBtn.Text = "Изменить пароль";
+            this.ChangePasswordBtn.UseVisualStyleBackColor = true;
+            // 
             // EditUser
             // 
             this.AcceptButton = this.button1;
@@ -220,6 +230,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.button2;
             this.ClientSize = new System.Drawing.Size(443, 391);
+            this.Controls.Add(this.ChangePasswordBtn);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.label8);
@@ -272,5 +283,6 @@
         private System.Windows.Forms.TextBox textBox7;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button ChangePasswordBtn;
     }
 }

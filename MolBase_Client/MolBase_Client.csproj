@@ -110,6 +110,7 @@
       <DependentUpon>LoginForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Molecule.cs" />
+    <Compile Include="MoleculeFormat.cs" />
     <Compile Include="MoleculesList.cs">
       <SubType>Form</SubType>
     </Compile>

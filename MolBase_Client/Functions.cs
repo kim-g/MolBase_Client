@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MoleculeDataBase;
+using OpenBabel;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,6 +11,97 @@ namespace MolBase_Client
 {
     public class Functions
     {
+        /// <summary>
+        /// Список поддерживаемых форматов
+        /// </summary>
+        public static MoleculeFormat[] Formats = new MoleculeFormat[]
+        {
+            new MoleculeFormat
+            {
+                Name = "Alchemy format",
+                Extentions = new string[] { "alc" }
+            },
+            new MoleculeFormat
+            {
+                Name = "Ball and Stick format",
+                Extentions = new string[] { "bs" }
+            },
+            new MoleculeFormat
+            {
+                Name = "Chem3D Cartesian format",
+                Extentions = new string[] { "c3d1", "c3d2" }
+            },
+            new MoleculeFormat
+            {
+                Name = "ChemDraw format",
+                Extentions = new string[] { "cdx", "cdxml" }
+            },
+            new MoleculeFormat
+            {
+                Name = "Crystallographic Information format",
+                Extentions = new string[] { "cif", "mcif", "mmcif" }
+            },
+            new MoleculeFormat
+            {
+                Name = "Chemical Markup Language",
+                Extentions = new string[] { "cml", "cmlr" }
+            },
+            new MoleculeFormat
+            {
+                Name = "Gaussian CUBE format",
+                Extentions = new string[] { "cub", "cube" }
+            },
+            new MoleculeFormat
+            {
+                Name = "DMol3 coordinates format",
+                Extentions = new string[] { "dmol" }
+            },
+            new MoleculeFormat
+            {
+                Name = "GULP format",
+                Extentions = new string[] { "got" }
+            },
+            new MoleculeFormat
+            {
+                Name = "HyperChem HIN format",
+                Extentions = new string[] { "hin" }
+            },
+            new MoleculeFormat
+            {
+                Name = "MCDL format",
+                Extentions = new string[] { "mcdl" }
+            },
+            new MoleculeFormat
+            {
+                Name = "MDL Mol format",
+                Extentions = new string[] { "mol", "mdl", "mol2", "sd", "sdf" }
+            },
+            new MoleculeFormat
+            {
+                Name = "PubChem format",
+                Extentions = new string[] { "pc" }
+            },
+            new MoleculeFormat
+            {
+                Name = "POS cartesian coordinates format",
+                Extentions = new string[] { "pos" }
+            },
+            new MoleculeFormat
+            {
+                Name = "SMILES format",
+                Extentions = new string[] { "smi", "smiles" }
+            },
+            new MoleculeFormat
+            {
+                Name = "XYZ cartesian coordinates format",
+                Extentions = new string[] { "xyz" }
+            }
+        };
+
+        /// <summary>
+        /// Все расширения 
+        /// </summary>
+        public static MoleculeFormat AllFormats = MoleculeFormat.Combine("Все файлы молекул", Formats);
 
         // Возврает список молекул из ответа сервера
         static public List<Molecule> GetMolListFromServerAnswer(List<string> Answer)
@@ -107,27 +200,55 @@ namespace MolBase_Client
         /// <returns></returns>
         public static List<User> GetUserList(string Parameters="")
         {
-            List<string> UserListString = ServerCommunication.Send_Get_Msg_To_Server("users.list", Parameters);
+            List<UserTransport> UserListString = ServerCommunication.GetTransportList<UserTransport>("users.get",
+                new string[] { Parameters });
             List<User> Users = new List<User>();
-            for (int i = 3; i < UserListString.Count - 1;)
+            foreach (UserTransport UT in UserListString)
             {
-                bool NotReady = true;
-                string StringToWork = "";
-                string[] Params;
-                do
-                {
-                    StringToWork += UserListString[i];
-                    Params = StringToWork.Split('|');
-                    NotReady = Params.Count() < 9;
-                    i++;
-                }
-                while (NotReady);
-                Users.Add(new User(Params[1], Params[2], Params[3], Params[4], Params[5], Params[6],
-                    Params[7], Params[8]));
+                Users.Add(new User(UT.id.ToString(), UT.Surname, UT.Name, UT.SecondName, UT.Login, UT.LaboratoruName,UT.Job,UT.Permissions.ToString()));
             }
 
             Users.Sort(new Compare_User("ID"));
             return Users;
+        }
+
+        /// <summary>
+        /// Читает молекулу из файла
+        /// </summary>
+        /// <param name="FileName">Имя файла</param>
+        /// <returns></returns>
+        public static OBMol ReadMoleculeFromFile(string FileName)
+        {
+            OBConversion obconv = new OBConversion();
+            OBFormat OBF = OBConversion.FormatFromExt(FileName);
+            
+            if (OBF == null)
+            {
+                MessageBox.Show("Неподдерживаемый формат данных", "Ошибка открытия файла");
+                return null;
+            }
+            obconv.SetInFormat(OBF); //Читаем ChemDraw файл (Потом расширить список)
+            OBMol mol = new OBMol();
+            obconv.ReadFile(mol, FileName);  //Читаем из файла
+            mol.SetTitle("");
+            mol.DeleteHydrogens();
+
+            return mol;
+        }
+
+        /// <summary>
+        /// Выдаёт, поддерживает ли программа выбранный формат
+        /// </summary>
+        /// <param name="FileName"></param>
+        /// <returns></returns>
+        public static bool CheckFile(string FileName)
+        {
+            string FMLow = FileName.ToLowerInvariant();
+            string Ext = Path.GetExtension(FMLow).Remove(0,1);
+            bool Res = AllFormats.Extentions.Contains(Ext);
+            return Res;
+
+            //return AllFormats.Extentions.Contains(Path.GetExtension(FileName.ToLowerInvariant()));
         }
     }
 }

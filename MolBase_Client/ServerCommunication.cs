@@ -35,44 +35,20 @@ namespace MolBase_Client
             // Буфер для входящих данных
             List<string> Res;
 
-            Socket senderSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-            // Соединяем сокет с удаленной точкой
-            senderSocket.Connect(ipEndPoint);
-
-            string Login = UserLogin == "" ? "NoUser" : UserLogin;
-            string SessionCode = UserSecureCode == "" ? "NoUserID" : UserSecureCode;
-
-            byte[] msg = Encoding.UTF8.GetBytes(Command + "\n" + Login + "\n" +
-                SessionCode + "\n" + Parameters + " ");
-
-            // Отправляем данные через сокет
-            byte[] msg_size = BitConverter.GetBytes(msg.Length);
-            int bytesSentS = senderSocket.Send(msg_size);
-            int bytesSent = senderSocket.Send(msg);
-            if (BinarInfo != null)
-            {
-                MemoryStream ms = new MemoryStream(BinarInfo);
-                for (int i = 0; i < BinarInfo.Count(); i += 1024)
-                {
-                    int Size = 1024;
-                    if (BinarInfo.Count() - i < 1024) { Size = BinarInfo.Count() - i; }
-                    byte[] Block = new byte[Size];
-                    ms.Read(Block, 0, Size);
-                    senderSocket.Send(Block);
-                }
-            }
-
             // Получаем ответ от сервера
             if (Command == Commands.Login)
             {
-                Crypt = (AES_Data)AES_Data.FromBin(RecieveData(senderSocket));
+                UserInfo UI = Login(new string[] { Parameters });
+                Crypt = UI?.Key;
+                Res = UI == null
+                    ? new List<string>() { Answers.StartMsg, "", "NoUserID", Answers.EndMsg }
+                    : Get_ListString_from_bytes(UI.Info);
             }
-            Res = Get_ListString_from_bytes(senderSocket);
-
-            // Освобождаем сокет
-            senderSocket.Shutdown(SocketShutdown.Both);
-            senderSocket.Close();
+            else
+            {
+                MemoryStream Answer = Query(Command, new string[] { Parameters }, BinarInfo);
+                Res = Get_ListString_from_bytes(Answer);
+            }
 
             if (Res[1] == Answers.NoLogin)
             {
@@ -82,12 +58,20 @@ namespace MolBase_Client
             return Res;
         }
 
-        private static MemoryStream RecieveData(Socket senderSocket)
+        private static MemoryStream RecieveData(Socket senderSocket, int Length=0)
         {
             MemoryStream GotData = new MemoryStream();
-            byte[] FSize = new byte[BitConverter.GetBytes((int)0).Length];
-            int Got = senderSocket.Receive(FSize);
-            int FileSize = BitConverter.ToInt32(FSize, 0);
+            int FileSize;
+            // Если сервер высылает размер передаваемого блока, то примем его
+            if (Length == 0)
+            {
+                byte[] FSize = new byte[BitConverter.GetBytes((int)0).Length];
+                int Got = senderSocket.Receive(FSize);
+                FileSize = BitConverter.ToInt32(FSize, 0);
+            }
+            else FileSize = Length;
+
+            // Получим сообщение
             for (int i = 0; i < FileSize; i += 1024)
             {
                 int BytesSize = FileSize - i > 1024
@@ -102,26 +86,30 @@ namespace MolBase_Client
         }
 
         /// <summary>
+        /// Превращает бинарный поток ответа в List
+        /// </summary>
+        /// <param name="senderSocket">Сокет, с которого получаем ответ</param>
+        /// <returns></returns>
+        private static List<string> Get_ListString_from_bytes(MemoryStream Answer)
+        {
+            List<string> Res = new List<string>();
+            byte[] bytes = new byte[Answer.Length];
+            Answer.Read(bytes, 0, bytes.Length);
+            string ResList = Crypt.DecryptStringFromBytes(bytes);
+            bool Stop = false;
+            Res.AddRange(Parce_StringList(ref Stop, ResList));
+
+            return Res;
+        }
+
+        /// <summary>
         /// Принимает бинарный ответ от сервера и превращает его в List(string)
         /// </summary>
         /// <param name="senderSocket">Сокет, с которого получаем ответ</param>
         /// <returns></returns>
         private static List<string> Get_ListString_from_bytes(Socket senderSocket)
         {
-            List<string> Res = new List<string>();
-            MemoryStream MS = RecieveData(senderSocket);
-            byte[] bytes = new byte[MS.Length];
-            MS.Read(bytes, 0, bytes.Length);
-            using (FileStream FS = new FileStream("temp.dat", FileMode.Create))
-            {
-                FS.Write(bytes, 0, bytes.Length);
-                FS.Close();
-            };
-            string ResList = Crypt.DecryptStringFromBytes(bytes);
-            bool Stop = false;
-            Res.AddRange(Parce_StringList(ref Stop, ResList));
-
-            return Res;
+            return Get_ListString_from_bytes(RecieveData(senderSocket));
         }
 
         /// <summary>
@@ -148,54 +136,25 @@ namespace MolBase_Client
                 return;
             }     // Если пользователь отменил, то прекращаем всё.
 
+            // Запос на получение файла
+            Socket senderSocket = SendQuery("file.get", new string[] { ID.ToString() });
+            //List<string> Answer = Get_ListString_from_bytes(senderSocket);
 
-            // Соединяемся с удаленным устройством
-            IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, port);
-
-            Socket senderSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-            // Соединяем сокет с удаленной точкой
-            senderSocket.Connect(ipEndPoint);
-
-
-            byte[] msg = Encoding.UTF8.GetBytes("<@*Send_File*@>" + "\n" + UserLogin + "\n" +
-                UserSecureCode + "\n" +
-                ID.ToString() + "\n" + " ");
-
-            // Отправляем данные через сокет
-            int bytesSentS = senderSocket.Send(BitConverter.GetBytes(msg.Length));
-            int bytesSent = senderSocket.Send(msg);
-
-            // Получаем длину текстовой записи
-            byte[] SL_Size = new byte[4];
-            senderSocket.Receive(SL_Size);
-            int StringList_Size = BitConverter.ToInt32(SL_Size, 0);
-
-            // Получаем текстовую запись
-            byte[] SL = new byte[StringList_Size];
-            senderSocket.Receive(SL);
-            bool Stop = false;
-            List<string> F_Size = Parce_StringList(ref Stop, Encoding.UTF8.GetString(SL, 0, StringList_Size));
-
-            // Получаем и записываем в файл по кусочкам
-            FileStream fs = new FileStream(FileName, FileMode.Create, FileAccess.Write);
-
-            int FtR_Size = Convert.ToInt32(F_Size[2]);
-            for (int i = 0; i < FtR_Size; i += 1024)
+            using (MemoryStream Ans = RecieveData(senderSocket))
             {
-                int block;
-                if (FtR_Size - i < 1024) { block = FtR_Size - i; }
-                else { block = 1024; }
-                byte[] buf = new byte[block];
-                senderSocket.Receive(buf);
-                fs.Write(buf, 0, block);
-                fs.Flush();
+                using (FileStream FS = new FileStream("temp.dat", FileMode.Create))
+                {
+                    FS.Write(Crypt.AesKey, 0, Crypt.AesKey.Count());
+                    FS.Write(Crypt.AesIV, 0, Crypt.AesIV.Count());
+                    FS.Close();
+                }
+                MemoryStream MS =
+                    new MemoryStream(Crypt.DecryptBytes(Ans));
+                // Получаем и записываем в файл по кусочкам
+                FileStream fs = new FileStream(FileName, FileMode.Create, FileAccess.Write);
+                MS.CopyTo(fs);
+                fs.Close();
             }
-            fs.Close();
-
-            // Освобождаем сокет
-            senderSocket.Shutdown(SocketShutdown.Both);
-            senderSocket.Close();
         }
 
         /// <summary>
@@ -219,27 +178,155 @@ namespace MolBase_Client
             }
             return Res;
         }
+
+        /// <summary>
+        /// Подключается к сокету
+        /// </summary>
+        /// <returns></returns>
+        private static Socket Connect()
+        {
+            IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, port);
+
+            Socket senderSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+            // Соединяем сокет с удаленной точкой
+            senderSocket.Connect(ipEndPoint);
+
+            return senderSocket;
+        }
+
+        /// <summary>
+        /// Посылает запрос с параметрами на сервер и выдаёт битовый поток ответа сервера
+        /// </summary>
+        /// <param name="Query">Основная команда серверу</param>
+        /// <param name="Params">Параметры команды</param>
+        /// <returns></returns>
+        private static MemoryStream Query(string Query, string[] Params, byte[] BinarInfo = null)
+        {
+            // Отправим запрос на сервер
+            Socket senderSocket = SendQuery(Query, Params, BinarInfo);
+
+            // Получим ответ от сервера
+            MemoryStream MS = RecieveData(senderSocket);
+
+            // Освобождаем сокет
+            senderSocket.Shutdown(SocketShutdown.Both);
+            senderSocket.Close();
+
+            // Возвращаем поток ответа
+            return MS;
+        }
+
+        private static UserInfo Login(string[] Params)
+        {
+            UserInfo UI = new UserInfo();
+
+            // Запос на вход
+            Socket senderSocket = SendQuery(Commands.Login, Params);
+
+            // Если возникла любая ошибка, то вход не выполнени
+            try
+            {
+                // Получаем ключ
+                UI.Key = (AES_Data)Serializable.FromBin(RecieveData(senderSocket));
+                // Получаем данные
+                UI.Info = RecieveData(senderSocket);
+            }
+            catch
+            {
+                UI = null;
+            }
+            
+            // Освобождаем сокет
+            senderSocket.Shutdown(SocketShutdown.Both);
+            senderSocket.Close();
+
+            return UI;
+        }
+
+        /// <summary>
+        /// Отправка запроса на сервер с оставлением открытой сессии взаимодействия с сервером для приёма ответов
+        /// </summary>
+        /// <param name="Query"></param>
+        /// <param name="Params"></param>
+        /// <param name="BinarInfo"></param>
+        /// <returns></returns>
+        private static Socket SendQuery(string Query, string[] Params, byte[] BinarInfo = null)
+        {
+            Socket senderSocket = Connect();
+            string Login = UserLogin == "" ? "NoUser" : UserLogin;
+            string SessionCode = UserSecureCode == "" ? "NoUserID" : UserSecureCode;
+
+            string FullQuery = Query + "\n" + Login + "\n" + SessionCode;
+            foreach (string Param in Params)
+                FullQuery += "\n" + Param;
+            byte[] msg = Encoding.UTF8.GetBytes(FullQuery);
+
+            // Отправляем данные через сокет
+            int bytesSentS = senderSocket.Send(BitConverter.GetBytes(msg.Length));
+            int bytesSent = senderSocket.Send(msg);
+
+            // Если есть бинарные данные, отправим и их
+            if (BinarInfo != null)
+            {
+                MemoryStream ms = new MemoryStream(BinarInfo);
+                for (int i = 0; i < BinarInfo.Count(); i += 1024)
+                {
+                    int Size = 1024;
+                    if (BinarInfo.Count() - i < 1024) { Size = BinarInfo.Count() - i; }
+                    byte[] Block = new byte[Size];
+                    ms.Read(Block, 0, Size);
+                    senderSocket.Send(Block);
+                }
+            }
+
+            return senderSocket;
+        }
+
+        public static List<T> GetTransportList<T>(string Query, string[] Params)
+        {
+            List<T> Res = new List<T>();
+            Socket senderSocket = SendQuery(Query, Params);
+            bool Stop = false;
+            do
+            {
+                MemoryStream ms = new MemoryStream(Crypt.DecryptBytes(RecieveData(senderSocket)));
+                ms.Position = 0;
+                if (ms.Length > 1) Res.Add((T)Serializable.FromSOAP(ms));
+                else Stop = true;
+            }
+            while (!Stop);
+
+            return Res;
+        }
     }
 
     public class ServerAnswers
     {
-        public string StartMsg = "<@Begin_Of_Session@>"; // Начало сессии передачи ответа сервера
-        public string EndMsg = "<@End_Of_Session@>";     // Конец сессии передачи ответа сервера
+        public string StartMsg = "<@Begin_Of_Session@>";    // Начало сессии передачи ответа сервера
+        public string EndMsg = "<@End_Of_Session@>";        // Конец сессии передачи ответа сервера
         public string NoLogin = "<Error 100: No such loged in user>";     // Ответ сервера о том, что имя пользователя-пароль не найдены
-        public string LoginOK = "<@Login_OK@>";           // Ответ сервера об успешном входе в систему
+        public string LoginOK = "<@Login_OK@>";             // Ответ сервера об успешном входе в систему
     }
 
     public class ServerCommands
     {
-        public string FN_msg = "file.name";         // Команда получения имени файла
-        public string QuitMsg = "account.quit";           // Команда на выход пользователя
-        public string Add_User = "user.add";                 // Команда добавления пользователя
-        public string Login = "account.login";           // Команда входа в систему
-        public string Add_Mol = "molecules.add";       // Команда на добавление молекулы
-        public string Search_Mol = "molecules.search";    // Команда поиска молекулы
-        public string Increase_Status = "status.increase"; // Увеличеть значение статуса соединения
-        public string Show_New_Mol = "molecules.search";  // Команда показать все молекулы новые
-        public string Show_New_Mol_Param = "status 1";  // Команда показать все молекулы новые
-        public string GetStatuses = "status.list";      // Выдать список статусов
+        public string FN_msg = "file.name";                 // Команда получения имени файла
+        public string File_Get = "file.get";                //Получить файл от сервера
+        public string QuitMsg = "account.quit";             // Команда на выход пользователя
+        public string Add_User = "user.add";                // Команда добавления пользователя
+        public string Login = "account.login";              // Команда входа в систему
+        public string Add_Mol = "molecules.add";            // Команда на добавление молекулы
+        public string Search_Mol = "molecules.search";      // Команда поиска молекулы
+        public string Increase_Status = "status.increase";  // Увеличеть значение статуса соединения
+        public string Show_New_Mol = "molecules.search";    // Команда показать все молекулы новые
+        public string Show_New_Mol_Param = "status 1";      // Команда показать все молекулы новые
+        public string GetStatuses = "status.list";          // Выдать список статусов
+    }
+
+    class UserInfo
+    {
+        public AES_Data Key;
+        public MemoryStream Info;
     }
 }

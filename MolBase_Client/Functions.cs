@@ -118,7 +118,7 @@ namespace MolBase_Client
                     // Помещаем весь XML в одну строку
                     string XML_Mol = "";
                     int j = 0;
-                    while (Answer[i + j] != "</Molecule_Transport>")
+                    while (Answer[i + j] != "</MoleculeTransport>")
                     {
                         XML_Mol += Answer[i + j];
                         j++;
@@ -126,7 +126,7 @@ namespace MolBase_Client
                     XML_Mol += "\n" + Answer[i + j];
 
                     // И, переведя XML в Molecule_Transport, а из него в Molecule добавляем в массив.
-                    Mols.Add(Molecule.From_Molecule_Transport(ConsoleServer.Molecule_Transport.FromXML(XML_Mol)));
+                    Mols.Add(Molecule.From_Molecule_Transport(Serializable.From_XML<MoleculeTransport>(XML_Mol)));
                 }
             }
 

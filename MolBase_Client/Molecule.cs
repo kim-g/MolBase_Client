@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using MoleculeDataBase;
+using System.IO;
 
 namespace MolBase_Client
 {
@@ -13,10 +15,15 @@ namespace MolBase_Client
             SMILES = _smiles;
             OBConversion obconv = new OBConversion();
             obconv.SetInFormat("smi");
-            Structure = new OBMol();
+            Structure = new OBMolecule();
             name = _name;
             obconv.ReadString(Structure, SMILES);
             Structure.SetTitle(name);
+            using (FileStream FS = new FileStream("temp.bin", FileMode.Create))
+            {
+                Structure.ToBin().CopyTo(FS);
+                FS.Close();
+            }
             obconv.SetOutFormat("_png2");
             string TempPic = Functions.TempFile();
             obconv.WriteFile(Structure, TempPic); // Пишем картинку в temp // Это такое колдунство // Мне стыдно, но по-другому не выходит
@@ -26,7 +33,7 @@ namespace MolBase_Client
             Brutto = Structure.GetFormula();
         }
 
-        public static Molecule From_Molecule_Transport(ConsoleServer.Molecule_Transport MT)
+        public static Molecule From_Molecule_Transport(MoleculeTransport MT)
         {
             Molecule Mol = new Molecule(MT.ID, MT.Structure, MT.Name);
             Mol.SetAdditionalInfoFromString(MT.Laboratory.ID.ToString(), MT.Person.ID.ToString(),
@@ -55,7 +62,7 @@ namespace MolBase_Client
         }
 
         public Image Picture;      // Изображение молекулы
-        public OBMol Structure;    // Структура OpenBabel для дальнейшей работы
+        public OBMolecule Structure;    // Структура OpenBabel для дальнейшей работы
         public string SMILES;      // Структура SMILES
         public string name;        // Шифр
         public double Weight;      // Молекулярная масса

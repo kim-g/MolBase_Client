@@ -132,7 +132,6 @@
     <Compile Include="Molecule_Info.Designer.cs">
       <DependentUpon>Molecule_Info.cs</DependentUpon>
     </Compile>
-    <Compile Include="Molecule_Transport.cs" />
     <Compile Include="MolStatus.cs" />
     <Compile Include="PDF_Passport.cs" />
     <Compile Include="Person.cs" />

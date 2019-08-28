@@ -118,9 +118,12 @@ namespace MolBase_Client
             }
             if (textBox6.Text == "") { MessageBox.Show("Введите логин пользователя", "Ошибка"); return; }
 
+            int LabID;
             switch (status)
             {
                 case 1:
+                    LabID = LabsID.Where(x => x.Value == comboBox1.SelectedItem.ToString()).FirstOrDefault().Key;
+
                     List<string> Answer = ServerCommunication.Send_Get_Msg_To_Server("users.add",
                     "name " + textBox2.Text +
                     "\nsecond_name " + textBox3.Text +
@@ -130,7 +133,7 @@ namespace MolBase_Client
                     "\nconfirm " + textBox4.Text +
                     "\npermissions 1" +
                     "\njob " + textBox7.Text +
-                    "\nlaboratory_id " + LabsID[comboBox1.SelectedIndex].ToString());
+                    "\nlaboratory_id " + LabID.ToString());
                     if (Answer[1] == "User added")
                     {
                         FormAnswer = true;
@@ -151,7 +154,7 @@ namespace MolBase_Client
                             : "\nsecond_name {CLEAR}";
                     if (comboBox1.SelectedItem.ToString() != OldInfo.Lab)
                     {
-                        int LabID = LabsID.Where(x => x.Value == comboBox1.SelectedItem.ToString()).FirstOrDefault().Key;
+                        LabID = LabsID.Where(x => x.Value == comboBox1.SelectedItem.ToString()).FirstOrDefault().Key;
 
                         Params += "\nlaboratory_id " +
                             LabID.ToString();

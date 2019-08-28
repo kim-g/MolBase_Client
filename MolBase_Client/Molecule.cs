@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using MoleculeDataBase;
 using System.IO;
+using System.Text;
 
 namespace MolBase_Client
 {
@@ -21,7 +22,8 @@ namespace MolBase_Client
             Structure.SetTitle(name);
             using (FileStream FS = new FileStream("temp.bin", FileMode.Create))
             {
-                Structure.ToBin().CopyTo(FS);
+                byte[] BinMol = Encoding.UTF8.GetBytes(Structure.ToMol());
+                FS.Write (BinMol, 0, BinMol.Length);
                 FS.Close();
             }
             obconv.SetOutFormat("_png2");
